@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HOKM NIGHT</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🃏</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div id="app">
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+  <div class="bg-glow bg-glow-3"></div>
+
+  <!-- START SCREEN -->
+  <section id="screen-start" class="screen">
+    <div class="title-wrap">
+      <h1 class="game-title">HOKM<span class="title-star">★</span>NIGHT</h1>
+      <div class="title-suits"><span class="s-spade">♠</span><span class="s-heart">♥</span><span class="s-diamond">♦</span><span class="s-club">♣</span></div>
+    </div>
+    <p class="subtitle">A Persian trick-taking classic, dealt out casino-lounge style</p>
+    <div class="menu-buttons">
+      <button id="btn-start" class="btn btn-gold btn-big">DEAL ME IN</button>
+      <button id="btn-howto" class="btn btn-ghost">How to Play</button>
+    </div>
+    <div class="menu-footer">
+      <label class="toggle"><input type="checkbox" id="chk-music" checked /><span>Music</span></label>
+      <label class="toggle"><input type="checkbox" id="chk-sfx" checked /><span>SFX</span></label>
+    </div>
+  </section>
+
+  <!-- HOW TO PLAY -->
+  <section id="screen-howto" class="screen hidden">
+    <div class="howto-card">
+      <h2>How to Play Hokm</h2>
+      <ul>
+        <li><strong>Teams.</strong> You &amp; North are partners vs. West &amp; East.</li>
+        <li><strong>The Hakem.</strong> Each hand, one seat is dealt 5 cards first and becomes Hakem — they pick the trump suit (Hokm).</li>
+        <li><strong>The Deal.</strong> Everyone then gets the rest, for 13 cards each.</li>
+        <li><strong>Play.</strong> Follow the suit that was led if you can. If you can't, play any card — trumps beat everything else.</li>
+        <li><strong>Tricks.</strong> Highest trump wins the trick, or the highest card of the led suit if no trump was played.</li>
+        <li><strong>Winning a Hand.</strong> First team to win 7 tricks takes the hand. Win it 7-0 for a "Kot" — worth double.</li>
+        <li><strong>Winning the Match.</strong> First team to 7 hand-points wins the match.</li>
+      </ul>
+      <button id="btn-howto-close" class="btn btn-gold">Got It</button>
+    </div>
+  </section>
+
+  <!-- GAME TABLE -->
+  <section id="screen-game" class="screen hidden">
+    <header class="hud">
+      <div class="score-chip team-a">
+        <span class="score-label">YOU &amp; NORTH</span>
+        <span id="score-a" class="score-num">0</span>
+      </div>
+      <div class="hand-info">
+        <span id="hakem-banner" class="pill"></span>
+        <span id="trump-banner" class="pill trump-pill"></span>
+      </div>
+      <div class="score-chip team-b">
+        <span class="score-label">WEST &amp; EAST</span>
+        <span id="score-b" class="score-num">0</span>
+      </div>
+      <div class="hud-controls">
+        <button id="btn-mute-music" class="icon-btn" title="Toggle music">🎵</button>
+        <button id="btn-mute-sfx" class="icon-btn" title="Toggle sound effects">🔊</button>
+      </div>
+    </header>
+
+    <div class="table" id="table">
+      <div class="seat seat-north" id="seat-2">
+        <div class="nameplate">North · Partner<span class="trick-count" id="tricks-2">0</span></div>
+        <div class="hand hand-north" id="hand-2"></div>
+      </div>
+      <div class="seat seat-west" id="seat-1">
+        <div class="nameplate">West<span class="trick-count" id="tricks-1">0</span></div>
+        <div class="hand hand-west" id="hand-1"></div>
+      </div>
+
+      <div class="trick-area" id="trick-area">
+        <div class="trick-slot slot-0" id="slot-0"></div>
+        <div class="trick-slot slot-1" id="slot-1"></div>
+        <div class="trick-slot slot-2" id="slot-2"></div>
+        <div class="trick-slot slot-3" id="slot-3"></div>
+        <div class="turn-indicator" id="turn-indicator"></div>
+      </div>
+
+      <div class="seat seat-east" id="seat-3">
+        <div class="nameplate">East<span class="trick-count" id="tricks-3">0</span></div>
+        <div class="hand hand-east" id="hand-3"></div>
+      </div>
+      <div class="seat seat-south" id="seat-0">
+        <div class="hand hand-south" id="hand-0"></div>
+        <div class="nameplate">You<span class="trick-count" id="tricks-0">0</span></div>
+      </div>
+    </div>
+
+    <div class="log" id="log"></div>
+  </section>
+
+  <!-- TRUMP SELECTION MODAL -->
+  <div id="modal-trump" class="modal hidden">
+    <div class="modal-card">
+      <h2>Choose Your Hokm</h2>
+      <p>You're the Hakem this hand — pick the trump suit.</p>
+      <div class="hakem-preview" id="hakem-preview"></div>
+      <div class="suit-picker" id="suit-picker">
+        <button class="suit-btn" data-suit="S"><span class="suit-glyph">♠</span><span class="suit-name">Spades</span></button>
+        <button class="suit-btn suit-red" data-suit="H"><span class="suit-glyph">♥</span><span class="suit-name">Hearts</span></button>
+        <button class="suit-btn suit-red" data-suit="D"><span class="suit-glyph">♦</span><span class="suit-name">Diamonds</span></button>
+        <button class="suit-btn" data-suit="C"><span class="suit-glyph">♣</span><span class="suit-name">Clubs</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HAND / MATCH RESULT MODAL -->
+  <div id="modal-result" class="modal hidden">
+    <div class="modal-card result-card">
+      <h2 id="result-title"></h2>
+      <p id="result-detail"></p>
+      <button id="btn-continue" class="btn btn-gold btn-big">Continue</button>
+    </div>
+  </div>
+
+  <div id="particles"></div>
+</div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

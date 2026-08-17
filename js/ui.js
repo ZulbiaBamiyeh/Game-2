@@ -1,21 +1,7 @@
 // DOM rendering, card artwork, and the animation "juice" for the Hokm table.
 import { SUIT_INFO, rankLabel, sortHand } from './deck.js';
 import { suitSVG } from './suits.js';
-import { courtImage } from './pixelart.js';
 
-// Suit colours are read back from the stylesheet so the palette has a single
-// source of truth; the map is only a fallback if the custom property is absent.
-const SUIT_HEX_FALLBACK = { S: '#17131f', H: '#e4153f', D: '#0b78d4', C: '#10904f' };
-const suitHexCache = {};
-function suitHex(suit) {
-  if (!suitHexCache[suit]) {
-    const v = getComputedStyle(document.documentElement)
-      .getPropertyValue(`--suit-${suit.toLowerCase()}`)
-      .trim();
-    suitHexCache[suit] = v || SUIT_HEX_FALLBACK[suit];
-  }
-  return suitHexCache[suit];
-}
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -42,6 +28,8 @@ export const el = {
   trumpBanner: $('#trump-banner'),
   btnMuteMusic: $('#btn-mute-music'),
   btnMuteSfx: $('#btn-mute-sfx'),
+  btnDeck: $('#btn-deck'),
+  chkContrast: $('#chk-contrast'),
   table: $('#table'),
   trickArea: $('#trick-area'),
   turnIndicator: $('#turn-indicator'),
@@ -74,60 +62,20 @@ export function showScreen(name) {
 
 // ---------- card artwork ----------
 
-// Traditional pip positions as [column, row] on a 3x7 grid, matching the
-// arrangement on a real deck. Pips below the midline are rotated, as printed.
-const PIP_LAYOUT = {
-  2: [[2, 1], [2, 7]],
-  3: [[2, 1], [2, 4], [2, 7]],
-  4: [[1, 1], [3, 1], [1, 7], [3, 7]],
-  5: [[1, 1], [3, 1], [2, 4], [1, 7], [3, 7]],
-  6: [[1, 1], [3, 1], [1, 4], [3, 4], [1, 7], [3, 7]],
-  7: [[1, 1], [3, 1], [2, 2], [1, 4], [3, 4], [1, 7], [3, 7]],
-  8: [[1, 1], [3, 1], [2, 2], [1, 4], [3, 4], [2, 6], [1, 7], [3, 7]],
-  9: [[1, 1], [3, 1], [1, 3], [3, 3], [2, 4], [1, 5], [3, 5], [1, 7], [3, 7]],
-  10: [[1, 1], [3, 1], [2, 2], [1, 3], [3, 3], [1, 5], [3, 5], [2, 6], [1, 7], [3, 7]],
-};
-
-/**
- * Card centre: a double-headed court illustration for J/Q/K, one large central
- * pip for the Ace, and the traditional pip arrangement for the number cards.
- */
-function buildCenter(card) {
-  if (card.rank >= 11 && card.rank <= 13) {
-    // The illustration is attached after parsing (see createCardFace).
-    return '<div class="center court"></div>';
-  }
-  if (card.rank === 14) {
-    return `<div class="center">${suitSVG(card.suit, 'center-suit is-ace')}</div>`;
-  }
-  const pips = PIP_LAYOUT[card.rank]
-    .map(([col, row]) =>
-      `<span class="pip${row > 4 ? ' flip' : ''}" style="grid-column:${col};grid-row:${row}">` +
-      `${suitSVG(card.suit)}</span>`
-    )
-    .join('');
-  return `<div class="center pips">${pips}</div>`;
-}
+// Card faces come from a deck sprite sheet: 13 columns (A,2..10,J,Q,K) by
+// 4 rows (spades, hearts, clubs, diamonds). Which sheet is used — the standard
+// deck or the high-contrast one — is a CSS variable, so switching decks
+// restyles every card on screen without re-rendering anything.
+const SUIT_ROW = { S: 0, H: 1, C: 2, D: 3 };
+const cardColumn = (rank) => (rank === 14 ? 0 : rank - 1);
 
 export function createCardFace(card, { small = false } = {}) {
   const wrap = document.createElement('div');
   wrap.className = `card suit-${card.suit.toLowerCase()}${small ? ' card-sm' : ''}`;
-  if (card.rank === 10) wrap.classList.add('rank-ten');
   wrap.dataset.id = card.id;
-  const label = rankLabel(card.rank);
-  const corner = `<span class="c-rank">${label}</span>${suitSVG(card.suit, 'c-suit')}`;
-  wrap.innerHTML = `
-    <div class="card-inner">
-      <div class="card-face">
-        <div class="corner tl">${corner}</div>
-        ${buildCenter(card)}
-        <div class="corner br">${corner}</div>
-      </div>
-    </div>`;
-
-  const court = wrap.querySelector('.center.court');
-  if (court) court.style.backgroundImage = courtImage(card.rank, suitHex(card.suit));
-
+  wrap.style.setProperty('--col', cardColumn(card.rank));
+  wrap.style.setProperty('--row', SUIT_ROW[card.suit]);
+  wrap.innerHTML = '<div class="card-inner"><div class="card-face"></div></div>';
   return wrap;
 }
 

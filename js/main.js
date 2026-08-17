@@ -200,8 +200,24 @@ function startNewMatch() {
   game.startMatch();
 }
 
+const DECK_KEY = 'hokm.deck.contrast';
+
+/** Swap the card sheet. Purely a CSS variable, so cards on screen update live. */
+function setContrastDeck(on) {
+  document.body.classList.toggle('deck-contrast', on);
+  ui.el.chkContrast.checked = on;
+  ui.el.btnDeck.classList.toggle('is-active', on);
+  try { localStorage.setItem(DECK_KEY, on ? '1' : '0'); } catch (e) { /* private mode */ }
+}
+
 function init() {
   hydrateSuitIcons();
+  let savedDeck = false;
+  try { savedDeck = localStorage.getItem(DECK_KEY) === '1'; } catch (e) { /* private mode */ }
+  setContrastDeck(savedDeck);
+  ui.el.chkContrast.addEventListener('change', (e) => setContrastDeck(e.target.checked));
+  ui.el.btnDeck.addEventListener('click', () => setContrastDeck(!ui.el.chkContrast.checked));
+
   // Build the card-back artwork once and share it as an image across every back.
   document.documentElement.style.setProperty('--card-back-img', cardBackImage());
   background = new ShaderBackground(document.getElementById('bg-canvas'));

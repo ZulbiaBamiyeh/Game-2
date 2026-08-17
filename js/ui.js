@@ -45,12 +45,43 @@ export const el = {
   app: $('#app'),
 };
 
-const SEAT_LABEL = ['You', 'West', 'North', 'East'];
+// Seat 0 is always the player; the other three get names drawn per match.
+const SEAT_POSITION = ['You', 'West', 'North', 'East'];
+let seatLabels = SEAT_POSITION.slice();
+
 export function seatName(seat) {
-  return SEAT_LABEL[seat];
+  return seatLabels[seat];
+}
+export function seatPosition(seat) {
+  return SEAT_POSITION[seat];
 }
 export function teamName(team) {
-  return team === 0 ? 'You & North' : 'West & East';
+  return team === 0
+    ? `You & ${seatLabels[2]}`
+    : `${seatLabels[1]} & ${seatLabels[3]}`;
+}
+
+/** Name the three bots and write those names into the table furniture. */
+export function setSeatNames(names) {
+  seatLabels = ['You', names[0], names[1], names[2]];
+  document.querySelector('#seat-1 .seat-name').textContent = names[0];
+  document.querySelector('#seat-2 .seat-name').textContent = names[1];
+  document.querySelector('#seat-3 .seat-name').textContent = names[2];
+  document.querySelector('#team-a-seats').textContent = `You + ${names[1]}`;
+  document.querySelector('#team-b-seats').textContent = `${names[0]} + ${names[2]}`;
+}
+
+/** A short-lived speech bubble beside a seat. */
+export function showSpeech(seat, text) {
+  const host = document.getElementById(`seat-${seat}`);
+  if (!host) return;
+  host.querySelectorAll('.speech').forEach((n) => n.remove());
+  const bubble = document.createElement('div');
+  bubble.className = 'speech';
+  bubble.textContent = text;
+  host.appendChild(bubble);
+  setTimeout(() => bubble.classList.add('leaving'), 2600);
+  setTimeout(() => bubble.remove(), 3100);
 }
 
 export function showScreen(name) {
@@ -170,7 +201,7 @@ export function updateTeamTricks(teamTricks) {
   for (const [label, bar, value] of cells) {
     if (label.textContent !== String(value)) {
       label.textContent = value;
-      pop(label.parentElement);
+      pop(label);
     }
     bar.style.width = `${Math.min(value / 7, 1) * 100}%`;
     bar.classList.toggle('is-full', value >= 7);
@@ -203,8 +234,8 @@ export function updateScores(matchScore, bumpTeam = null) {
   el.scoreB.textContent = matchScore[1];
   renderPips(el.pipsA, matchScore[0]);
   renderPips(el.pipsB, matchScore[1]);
-  if (bumpTeam === 0) pop(el.scoreA, 'bump');
-  if (bumpTeam === 1) pop(el.scoreB, 'bump');
+  if (bumpTeam === 0) pop(el.scoreA);
+  if (bumpTeam === 1) pop(el.scoreB);
 
   // Mark whichever side is ahead so the standing reads at a glance.
   const [a, b] = matchScore;

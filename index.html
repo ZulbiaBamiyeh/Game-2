@@ -55,17 +55,21 @@
       <div class="score-chip team-a" id="panel-a">
         <div class="team-head">
           <span class="team-name">YOUR TEAM</span>
-          <span class="team-seats">You + North</span>
+          <span class="team-seats" id="team-a-seats">You + North</span>
         </div>
-        <div class="score-row">
-          <span id="score-a" class="score-num">0</span>
-          <span class="score-unit">PTS</span>
+        <div class="stat-row">
+          <div class="stat">
+            <span id="tricks-team-a" class="stat-num tricks-num">0</span>
+            <span class="stat-cap">TRICKS<br>THIS HAND</span>
+          </div>
+          <div class="stat-div"></div>
+          <div class="stat">
+            <span id="score-a" class="stat-num">0</span>
+            <span class="stat-cap">POINTS<br>OF 7</span>
+          </div>
         </div>
+        <div class="tricks-bar"><i id="tricks-bar-a"></i></div>
         <div class="pt-pips" id="pips-a"></div>
-        <div class="tricks-row">
-          <div class="tricks-bar"><i id="tricks-bar-a"></i></div>
-          <span class="tricks-text">TRICKS THIS HAND <b id="tricks-team-a">0</b>/7</span>
-        </div>
       </div>
       <div class="hand-info">
         <span id="hakem-banner" class="pill"></span>
@@ -74,17 +78,21 @@
       <div class="score-chip team-b" id="panel-b">
         <div class="team-head">
           <span class="team-name">OPPONENTS</span>
-          <span class="team-seats">West + East</span>
+          <span class="team-seats" id="team-b-seats">West + East</span>
         </div>
-        <div class="score-row">
-          <span id="score-b" class="score-num">0</span>
-          <span class="score-unit">PTS</span>
+        <div class="stat-row">
+          <div class="stat">
+            <span id="tricks-team-b" class="stat-num tricks-num">0</span>
+            <span class="stat-cap">TRICKS<br>THIS HAND</span>
+          </div>
+          <div class="stat-div"></div>
+          <div class="stat">
+            <span id="score-b" class="stat-num">0</span>
+            <span class="stat-cap">POINTS<br>OF 7</span>
+          </div>
         </div>
+        <div class="tricks-bar"><i id="tricks-bar-b"></i></div>
         <div class="pt-pips" id="pips-b"></div>
-        <div class="tricks-row">
-          <div class="tricks-bar"><i id="tricks-bar-b"></i></div>
-          <span class="tricks-text">TRICKS THIS HAND <b id="tricks-team-b">0</b>/7</span>
-        </div>
       </div>
       <div class="hud-controls">
         <button id="btn-mute-music" class="icon-btn" title="Toggle music">🎵</button>
@@ -95,11 +103,11 @@
 
     <div class="table" id="table">
       <div class="seat seat-north" id="seat-2">
-        <div class="nameplate team-a">North · your partner<span class="trick-count" id="tricks-2">0</span></div>
+        <div class="nameplate team-a"><span class="seat-name">North</span><span class="seat-pos">partner · N</span><span class="trick-count" id="tricks-2">0</span></div>
         <div class="hand hand-north" id="hand-2"></div>
       </div>
       <div class="seat seat-west" id="seat-1">
-        <div class="nameplate team-b">West<span class="trick-count" id="tricks-1">0</span></div>
+        <div class="nameplate team-b"><span class="seat-name">West</span><span class="seat-pos">W</span><span class="trick-count" id="tricks-1">0</span></div>
         <div class="hand hand-west" id="hand-1"></div>
       </div>
 
@@ -112,12 +120,12 @@
       </div>
 
       <div class="seat seat-east" id="seat-3">
-        <div class="nameplate team-b">East<span class="trick-count" id="tricks-3">0</span></div>
+        <div class="nameplate team-b"><span class="seat-name">East</span><span class="seat-pos">E</span><span class="trick-count" id="tricks-3">0</span></div>
         <div class="hand hand-east" id="hand-3"></div>
       </div>
       <div class="seat seat-south" id="seat-0">
         <div class="hand hand-south" id="hand-0"></div>
-        <div class="nameplate team-a">You<span class="trick-count" id="tricks-0">0</span></div>
+        <div class="nameplate team-a"><span class="seat-name">You</span><span class="seat-pos">S</span><span class="trick-count" id="tricks-0">0</span></div>
       </div>
     </div>
 

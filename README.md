@@ -59,7 +59,8 @@ or `npx http-server`, or any static file server.
 
 ## How to play
 
-- You (South) and North are partners, against West and East.
+- You (South) and your partner across the table are partners, against the two
+  players to your left and right. The three bots are named at random each match.
 - Each hand, one seat is dealt 5 cards first and becomes the **Hakem** —
   they choose the trump suit (the "Hokm"). Everyone is then dealt the rest,
   for 13 cards each.
@@ -85,5 +86,6 @@ js/pixelart.js    All pixel artwork: suits, courts, card back
 js/suits.js       Suit naming + icon hydration
 js/bg.js          WebGL shader background
 js/ui.js          DOM rendering, card faces, animation juice
+js/chatter.js     Table-talk lines, chosen by what just happened
 js/main.js        Wires engine + AI + audio + UI together
 ```

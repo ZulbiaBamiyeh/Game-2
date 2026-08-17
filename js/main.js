@@ -6,6 +6,24 @@ import * as ui from './ui.js';
 import { SUIT_INFO } from './deck.js';
 import { hydrateSuitIcons } from './suits.js';
 import { cardBackImage } from './pixelart.js';
+import * as chatter from './chatter.js';
+
+// Drawn per match so the table has a different cast each time.
+const BOT_NAMES = [
+  'Darius', 'Roya', 'Kian', 'Nasrin', 'Omid', 'Parisa', 'Reza', 'Shirin',
+  'Arash', 'Laleh', 'Babak', 'Mitra', 'Cyrus', 'Golnaz', 'Farhad', 'Yasmin',
+  'Sohrab', 'Anahita', 'Kaveh', 'Nazanin', 'Jamshid', 'Roxana', 'Bijan',
+  'Soraya', 'Hooman', 'Leila', 'Siavash', 'Pardis', 'Ramin', 'Firouzeh',
+];
+
+function drawBotNames() {
+  const pool = BOT_NAMES.slice();
+  const picked = [];
+  for (let i = 0; i < 3; i++) {
+    picked.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  }
+  return picked; // West, North, East
+}
 
 const TRICK_HOLD_MS = 1150;
 const HAND_MODAL_DELAY_MS = 1500;
@@ -118,6 +136,9 @@ function wireGameEvents() {
   game.on('trump-chosen', ({ suit, hakemSeat }) => {
     ui.setTrumpBanner(suit);
     if (background) background.pulse();
+    if (hakemSeat !== HUMAN_SEAT) {
+      ui.showSpeech(hakemSeat, chatter.trumpCallLine(SUIT_INFO[suit].name));
+    }
     ui.log(`${ui.seatName(hakemSeat)} calls ${SUIT_INFO[suit].name} (${SUIT_INFO[suit].symbol}) as Hokm!`);
   });
 
@@ -135,7 +156,7 @@ function wireGameEvents() {
     }
   });
 
-  game.on('trick-end', ({ winner, teamTricks }) => {
+  game.on('trick-end', ({ winner, teamTricks, plays }) => {
     ui.setActiveSeat(null);
     ui.setTurnText(`${ui.seatName(winner)} takes the trick!`);
 
@@ -149,6 +170,20 @@ function wireGameEvents() {
 
     ui.updateTrickCounts(game.tricksWon);
     ui.updateTeamTricks(teamTricks);
+
+    // Someone comments: the winner needles or celebrates, or a bot who just
+    // lost the trick grumbles instead.
+    const trumped = plays.some((p) => p.card.suit === game.trumpSuit)
+      && plays[0].card.suit !== game.trumpSuit;
+    if (winner !== HUMAN_SEAT) {
+      const line = chatter.trickLine(teamOf(winner) === 0, trumped);
+      if (line) ui.showSpeech(winner, line);
+    } else {
+      const losers = plays.map((p) => p.seat).filter((sx) => sx !== HUMAN_SEAT);
+      const who = losers[Math.floor(Math.random() * losers.length)];
+      const line = chatter.lostTrickLine(teamOf(who) === 0);
+      if (line) ui.showSpeech(who, line);
+    }
     ui.log(
       `${ui.seatName(winner)} takes the trick for ${ui.teamName(teamOf(winner))} · ` +
       `You & North ${teamTricks[0]} — West & East ${teamTricks[1]}`
@@ -176,6 +211,15 @@ function wireGameEvents() {
           { grand: true }
         );
       } else {
+        // A bot on each side reacts to how the hand went.
+        const speakers = [1, 2, 3].filter((sx) => teamOf(sx) === payload.winningTeam);
+        const speaker = speakers.length
+          ? speakers[Math.floor(Math.random() * speakers.length)]
+          : null;
+        if (speaker !== null) {
+          const line = chatter.handEndLine(teamOf(speaker) === 0, true, payload.isKot);
+          if (line) ui.showSpeech(speaker, line);
+        }
         audio.handWin();
         ui.spawnConfetti(payload.isKot ? 60 : 32);
         ui.screenShake(payload.isKot ? 1.4 : 0.9);
@@ -191,6 +235,7 @@ function wireGameEvents() {
 }
 
 function startNewMatch() {
+  ui.setSeatNames(drawBotNames());
   game = new HokmGame({ targetHandWins: 7 });
   wireGameEvents();
   ui.updateScores([0, 0]);

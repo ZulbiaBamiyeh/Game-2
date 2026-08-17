@@ -17,7 +17,7 @@
   <section id="screen-start" class="screen">
     <div class="title-wrap">
       <h1 class="game-title">HOKM<span class="title-star">★</span>NIGHT</h1>
-      <div class="title-suits"><span class="s-spade">♠</span><span class="s-heart">♥</span><span class="s-diamond">♦</span><span class="s-club">♣</span></div>
+      <div class="title-suits"><span class="suit-s" data-suit-icon="S"></span><span class="suit-h" data-suit-icon="H"></span><span class="suit-d" data-suit-icon="D"></span><span class="suit-c" data-suit-icon="C"></span></div>
     </div>
     <p class="subtitle">A Persian trick-taking classic, dealt out casino-lounge style</p>
 
@@ -51,24 +51,38 @@
   <!-- GAME TABLE -->
   <section id="screen-game" class="screen hidden">
     <header class="hud">
-      <div class="score-chip team-a">
-        <span class="score-label">YOU &amp; NORTH</span>
-        <span class="score-row"><span id="score-a" class="score-num">0</span><span class="score-unit">PTS</span></span>
+      <div class="score-chip team-a" id="panel-a">
+        <div class="team-head">
+          <span class="team-name">YOUR TEAM</span>
+          <span class="team-seats">You + North</span>
+        </div>
+        <div class="score-row">
+          <span id="score-a" class="score-num">0</span>
+          <span class="score-unit">PTS</span>
+        </div>
+        <div class="pt-pips" id="pips-a"></div>
         <div class="tricks-row">
-          <span class="tricks-text">TRICKS <b id="tricks-team-a">0</b>/7</span>
           <div class="tricks-bar"><i id="tricks-bar-a"></i></div>
+          <span class="tricks-text">TRICKS THIS HAND <b id="tricks-team-a">0</b>/7</span>
         </div>
       </div>
       <div class="hand-info">
         <span id="hakem-banner" class="pill"></span>
         <span id="trump-banner" class="pill trump-pill"></span>
       </div>
-      <div class="score-chip team-b">
-        <span class="score-label">WEST &amp; EAST</span>
-        <span class="score-row"><span id="score-b" class="score-num">0</span><span class="score-unit">PTS</span></span>
+      <div class="score-chip team-b" id="panel-b">
+        <div class="team-head">
+          <span class="team-name">OPPONENTS</span>
+          <span class="team-seats">West + East</span>
+        </div>
+        <div class="score-row">
+          <span id="score-b" class="score-num">0</span>
+          <span class="score-unit">PTS</span>
+        </div>
+        <div class="pt-pips" id="pips-b"></div>
         <div class="tricks-row">
-          <span class="tricks-text">TRICKS <b id="tricks-team-b">0</b>/7</span>
           <div class="tricks-bar"><i id="tricks-bar-b"></i></div>
+          <span class="tricks-text">TRICKS THIS HAND <b id="tricks-team-b">0</b>/7</span>
         </div>
       </div>
       <div class="hud-controls">
@@ -115,10 +129,10 @@
       <p>You're the Hakem this hand — pick the trump suit.</p>
       <div class="hakem-preview" id="hakem-preview"></div>
       <div class="suit-picker" id="suit-picker">
-        <button class="suit-btn" data-suit="S"><span class="suit-glyph">♠</span><span class="suit-name">Spades</span></button>
-        <button class="suit-btn suit-red" data-suit="H"><span class="suit-glyph">♥</span><span class="suit-name">Hearts</span></button>
-        <button class="suit-btn suit-red" data-suit="D"><span class="suit-glyph">♦</span><span class="suit-name">Diamonds</span></button>
-        <button class="suit-btn" data-suit="C"><span class="suit-glyph">♣</span><span class="suit-name">Clubs</span></button>
+        <button class="suit-btn suit-s" data-suit="S"><span class="suit-glyph" data-suit-icon="S"></span><span class="suit-name">Spades</span></button>
+        <button class="suit-btn suit-h" data-suit="H"><span class="suit-glyph" data-suit-icon="H"></span><span class="suit-name">Hearts</span></button>
+        <button class="suit-btn suit-d" data-suit="D"><span class="suit-glyph" data-suit-icon="D"></span><span class="suit-name">Diamonds</span></button>
+        <button class="suit-btn suit-c" data-suit="C"><span class="suit-glyph" data-suit-icon="C"></span><span class="suit-name">Clubs</span></button>
       </div>
     </div>
   </div>

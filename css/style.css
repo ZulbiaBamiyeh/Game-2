@@ -48,7 +48,14 @@
   --card-cream: #fdf6e7;
   --card-cream-edge: #e8dcc0;
   --card-ink: #1a1526;
-  --card-red: #d31f45;
+
+  /* Four-colour deck. Red/black alone gives two buckets for four suits, so
+     hearts/diamonds and spades/clubs are told apart by colour as well as
+     shape. */
+  --suit-s: #17131f;
+  --suit-h: #e4153f;
+  --suit-d: #0b78d4;
+  --suit-c: #10904f;
 
   --outline: #05070f;
   --shadow: rgba(3, 5, 14, 0.6);
@@ -174,21 +181,25 @@ body.no-webgl #app {
 @keyframes spin-star { from { transform: rotate(0); } to { transform: rotate(360deg); } }
 
 .title-suits {
-  margin-top: 0.7em;
-  font-size: clamp(1.2rem, 3vw, 1.9rem);
-  letter-spacing: 0.55em;
-  padding-left: 0.55em;
+  margin-top: 0.9em;
+  font-size: clamp(1.3rem, 3vw, 2rem);
+  display: flex;
+  justify-content: center;
+  gap: 0.7em;
 }
 .title-suits span {
   display: inline-block;
   animation: suit-float 3.2s ease-in-out infinite;
-  text-shadow: 0 2px 0 var(--outline);
+  filter: drop-shadow(0 3px 0 var(--outline));
 }
 .title-suits span:nth-child(2) { animation-delay: 0.25s; }
 .title-suits span:nth-child(3) { animation-delay: 0.5s; }
 .title-suits span:nth-child(4) { animation-delay: 0.75s; }
-.title-suits .s-spade, .title-suits .s-club { color: var(--ink); }
-.title-suits .s-heart, .title-suits .s-diamond { color: var(--red); }
+/* Brightened for legibility against the dark background. */
+.title-suits .suit-s { color: #e8e2f2; }
+.title-suits .suit-h { color: #ff5470; }
+.title-suits .suit-d { color: #43b8ff; }
+.title-suits .suit-c { color: #4ee08e; }
 @keyframes suit-float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-8px); }
@@ -316,11 +327,11 @@ body.no-webgl #app {
   background: linear-gradient(180deg, var(--navy-600), var(--navy-800));
   border: 3px solid var(--outline);
   border-radius: 14px;
-  padding: 0.45em 0.95em 0.4em;
+  padding: 0.55em 1.1em 0.55em;
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 132px;
+  min-width: 196px;
   box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.07), 0 5px 0 var(--outline), 0 10px 20px var(--shadow);
   position: relative;
   overflow: hidden;
@@ -334,25 +345,75 @@ body.no-webgl #app {
 .score-chip.team-a::before { background: var(--blue); box-shadow: 0 0 16px var(--blue); }
 .score-chip.team-b::before { background: var(--red); box-shadow: 0 0 16px var(--red); }
 
-.score-label {
-  font-size: 0.55rem;
-  letter-spacing: 0.08em;
-  color: var(--ink-faint);
-  font-family: var(--font-pixel);
-  margin-top: 0.2em;
+.team-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  margin-top: 0.25em;
 }
+.team-name {
+  font-family: var(--font-pixel);
+  font-size: 0.78rem;
+  letter-spacing: 0.07em;
+  text-shadow: 0 2px 0 var(--outline);
+}
+.team-a .team-name { color: var(--blue); }
+.team-b .team-name { color: var(--red); }
+.team-seats {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+}
+
 .score-num {
   font-family: var(--font-pixel);
-  font-size: 2rem;
+  font-size: 2.6rem;
   color: var(--gold);
-  line-height: 1.1;
-  text-shadow: 0 3px 0 var(--outline);
+  line-height: 1;
+  text-shadow: 0 3px 0 var(--outline), 0 0 22px rgba(255, 207, 63, 0.45);
 }
-.score-row { display: flex; align-items: baseline; gap: 0.3em; }
+
+/* Seven point markers — match progress at a glance, no arithmetic needed. */
+.pt-pips {
+  display: flex;
+  gap: 4px;
+  margin: 0.15em 0 0.3em;
+}
+.pt-pips i {
+  width: 15px;
+  height: 11px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255,255,255,0.05);
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+.team-a .pt-pips i.lit {
+  background: linear-gradient(180deg, #8ee6ff, var(--blue));
+  box-shadow: 0 0 8px var(--blue);
+}
+.team-b .pt-pips i.lit {
+  background: linear-gradient(180deg, #ff8ba0, var(--red));
+  box-shadow: 0 0 8px var(--red);
+}
+.pt-pips i.just-lit { animation: pip-flash 0.6s ease-out; }
+@keyframes pip-flash {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.9); filter: brightness(1.7); }
+  100% { transform: scale(1); }
+}
+
+/* The side that's ahead gets a lit border. */
+.score-chip.is-leading { box-shadow: inset 0 2px 0 rgba(255,255,255,0.1), 0 5px 0 var(--outline), 0 10px 24px var(--shadow), 0 0 24px rgba(255, 207, 63, 0.3); }
+.score-chip.team-a.is-leading { border-color: var(--blue); }
+.score-chip.team-b.is-leading { border-color: var(--red); }
+.score-row { display: flex; align-items: baseline; gap: 0.4em; }
 .score-unit {
   font-family: var(--font-pixel);
-  font-size: 0.5rem;
-  color: var(--ink-faint);
+  font-size: 0.6rem;
+  color: var(--ink-dim);
   letter-spacing: 0.06em;
 }
 
@@ -367,16 +428,16 @@ body.no-webgl #app {
 }
 .tricks-text {
   font-family: var(--font-pixel);
-  font-size: 0.5rem;
+  font-size: 0.56rem;
   color: var(--ink-dim);
   letter-spacing: 0.05em;
 }
-.tricks-text b { color: var(--gold); font-weight: 400; }
+.tricks-text b { color: var(--gold); font-weight: 400; font-size: 1.2em; }
 .tricks-row.pop { animation: pill-pop 0.4s cubic-bezier(.3,1.6,.4,1); }
 
 .tricks-bar {
   width: 100%;
-  height: 5px;
+  height: 7px;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.45);
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
@@ -416,14 +477,22 @@ body.no-webgl #app {
   box-shadow: 0 3px 0 var(--outline);
   white-space: nowrap;
 }
+.pill { display: inline-flex; align-items: center; gap: 0.45em; }
+/* Before a trump is called the banner has no content — don't draw an empty chip. */
+.pill:empty { display: none; }
+.pill-suit { font-size: 1.15em; }
+
 .trump-pill.is-set {
   color: var(--outline);
   background: linear-gradient(180deg, #ffe27a, var(--gold));
   border-color: var(--outline);
   box-shadow: 0 3px 0 var(--gold-deep), 0 0 22px rgba(255, 207, 63, 0.6);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
-.trump-pill.is-set.suit-red { color: var(--card-red); }
+.trump-pill.is-set.suit-s .pill-suit { color: var(--suit-s); }
+.trump-pill.is-set.suit-h .pill-suit { color: var(--suit-h); }
+.trump-pill.is-set.suit-d .pill-suit { color: var(--suit-d); }
+.trump-pill.is-set.suit-c .pill-suit { color: var(--suit-c); }
 .pill.pop { animation: pill-pop 0.45s cubic-bezier(.3,1.6,.4,1); }
 @keyframes pill-pop {
   0% { transform: scale(1); }
@@ -459,7 +528,8 @@ body.no-webgl #app {
 /* Nameplates always sit above their own stack of cards. */
 .nameplate { position: relative; z-index: 70; }
 .seat-south .nameplate { margin-top: 0.15rem; }
-.seat-west, .seat-east { overflow: hidden; }
+/* Clip the stack, never the nameplate above it. */
+.hand-west, .hand-east { overflow: hidden; }
 
 .nameplate {
   font-family: var(--font-pixel);
@@ -529,13 +599,11 @@ body.no-webgl #app {
   height: min(34vh, 330px);
   margin: 0 auto;
   border-radius: 50%;
+  /* Soft felt pool with no hard edge — a ring would just draw attention to
+     cards overhanging it. */
   background:
-    radial-gradient(circle at 50% 42%, rgba(78, 240, 142, 0.07), transparent 62%),
-    radial-gradient(circle, rgba(255, 255, 255, 0.045), rgba(0, 0, 0, 0.22) 72%);
-  box-shadow:
-    inset 0 0 60px rgba(0, 0, 0, 0.5),
-    inset 0 0 0 2px rgba(255, 255, 255, 0.06);
-  border: 2px dashed rgba(255, 255, 255, 0.09);
+    radial-gradient(circle at 50% 45%, rgba(78, 240, 142, 0.05), transparent 58%),
+    radial-gradient(circle, rgba(0, 0, 0, 0.34) 30%, transparent 72%);
 }
 
 .trick-slot {
@@ -609,63 +677,77 @@ body.no-webgl #app {
     inset 0 -5px 10px rgba(180, 160, 120, 0.14),
     0 4px 0 var(--outline),
     0 10px 20px var(--shadow);
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  padding: 6px 7px;
   font-family: var(--font-pixel);
   color: var(--card-ink);
   overflow: hidden;
   animation: card-idle 4.5s ease-in-out infinite;
   animation-delay: calc(var(--i, 0) * -0.35s);
 }
-.card.red .card-face { color: var(--card-red); }
+.card.suit-s .card-face { color: var(--suit-s); }
+.card.suit-h .card-face { color: var(--suit-h); }
+.card.suit-d .card-face { color: var(--suit-d); }
+.card.suit-c .card-face { color: var(--suit-c); }
+
+/* Inline suit artwork scales with the surrounding font size. */
+.suit-ico {
+  width: 1em;
+  height: 1em;
+  display: block;
+  flex: 0 0 auto;
+}
 
 @keyframes card-idle {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-3px); }
 }
 
-/* The corner index is the primary read — a fanned hand shows little else. */
+/* Corners and centre are positioned absolutely rather than laid out in a grid.
+   A grid row sized to the leftover space clipped the suit artwork — a diamond
+   lost its lower half and read as a triangle. */
 .corner {
+  position: absolute;
   display: flex;
   flex-direction: column;
   align-items: center;
   line-height: 0.88;
   width: 1.5em;
 }
+.corner.tl { top: 5px; left: 6px; }
+.corner.br { bottom: 5px; right: 6px; transform: rotate(180deg); }
 .corner .c-rank {
   font-size: 1.6rem;
   letter-spacing: -0.02em;
 }
 .corner .c-suit {
-  font-size: 1.15rem;
-  margin-top: 0.1em;
-}
-.corner.br {
-  justify-self: end;
-  transform: rotate(180deg);
+  font-size: 1.2rem;
+  margin-top: 0.16em;
 }
 /* "10" is twice as wide as any other rank, so it needs to come down a step. */
 .card.rank-ten .corner .c-rank { font-size: 1.12rem; }
 
 .center {
+  position: absolute;
+  inset: 0;
   display: grid;
   place-items: center;
-  min-height: 0;
-  overflow: hidden;
+  pointer-events: none;
 }
 .center-suit {
-  font-size: 2.7rem;
-  line-height: 1;
-  opacity: 0.92;
-  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.16));
+  font-size: 2.6rem;
+  opacity: 0.95;
+  filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.18));
 }
-.center-suit.is-ace { font-size: 3.5rem; }
+.center-suit.is-ace { font-size: 3.4rem; }
+
+/* Court cards: the figure glyph reads as the rank, with a small suit tucked
+   beside it so the suit is never carried by the corner alone. */
+.court { display: flex; align-items: center; justify-content: center; gap: 0.1em; }
 .court-glyph {
   font-size: 2.5rem;
   line-height: 1;
-  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.2));
 }
+.court-suit { font-size: 1.05rem; opacity: 0.9; }
 
 /* hand-specific card behaviour */
 
@@ -702,9 +784,11 @@ body.no-webgl #app {
 .card-sm { --card-w: 78px; --card-h: 110px; }
 .card-sm .corner .c-rank { font-size: 1.25rem; }
 .card-sm.rank-ten .corner .c-rank { font-size: 0.88rem; }
-.card-sm .corner .c-suit { font-size: 0.9rem; }
+.card-sm .corner .c-suit { font-size: 0.95rem; }
 .card-sm .center-suit { font-size: 2rem; }
+.card-sm .center-suit.is-ace { font-size: 2.5rem; }
 .card-sm .court-glyph { font-size: 1.85rem; }
+.card-sm .court-suit { font-size: 0.8rem; }
 
 /* card backs */
 
@@ -914,14 +998,20 @@ body.no-webgl #app {
   transition: transform 0.13s cubic-bezier(.3,1.5,.5,1), box-shadow 0.13s ease, background 0.13s ease;
   min-width: 76px;
 }
-.suit-btn .suit-glyph { font-size: 1.85rem; line-height: 1; }
-.suit-btn.suit-red { color: var(--red); }
-.suit-btn .suit-name { font-size: 0.5rem; letter-spacing: 0.04em; opacity: 0.8; }
+.suit-btn .suit-glyph { font-size: 1.9rem; line-height: 1; display: block; }
+.suit-btn .suit-name { font-size: 0.5rem; letter-spacing: 0.04em; opacity: 0.85; }
+/* Suits keep their deck colour on the picker, on a light plate so the darker
+   ones stay legible. */
+.suit-btn { background: linear-gradient(180deg, #f6efe0, #ded3bd); }
+.suit-btn .suit-name { color: var(--outline); }
+.suit-btn.suit-s { color: var(--suit-s); }
+.suit-btn.suit-h { color: var(--suit-h); }
+.suit-btn.suit-d { color: var(--suit-d); }
+.suit-btn.suit-c { color: var(--suit-c); }
 .suit-btn:hover {
   transform: translateY(-6px) scale(1.07) rotate(-2deg);
-  background: linear-gradient(180deg, #ffe27a, var(--gold));
-  color: var(--outline);
-  box-shadow: 0 11px 0 var(--outline), 0 18px 28px var(--shadow), 0 0 30px rgba(255, 207, 63, 0.55);
+  background: linear-gradient(180deg, #fffdf6, #ffe9a8);
+  box-shadow: 0 11px 0 var(--outline), 0 18px 28px var(--shadow), 0 0 34px rgba(255, 207, 63, 0.65);
 }
 .suit-btn:active { transform: translateY(3px) scale(0.98); box-shadow: 0 2px 0 var(--outline); }
 
@@ -977,7 +1067,9 @@ body.no-webgl #app {
   .card.rank-ten .corner .c-rank { font-size: 0.95rem; }
   .corner .c-suit { font-size: 1rem; }
   .center-suit { font-size: 2.2rem; }
+  .center-suit.is-ace { font-size: 2.8rem; }
   .court-glyph { font-size: 2.05rem; }
+  .court-suit { font-size: 0.9rem; }
 }
 
 @media (max-width: 900px) {
@@ -986,10 +1078,19 @@ body.no-webgl #app {
   .card.rank-ten .corner .c-rank { font-size: 0.78rem; }
   .corner .c-suit { font-size: 0.85rem; }
   .center-suit { font-size: 1.8rem; }
+  .center-suit.is-ace { font-size: 2.3rem; }
   .court-glyph { font-size: 1.7rem; }
+  .court-suit { font-size: 0.75rem; }
+  .score-chip { min-width: 172px; }
+  .team-seats { font-size: 0.6rem; }
+  .pt-pips i { width: 8px; height: 8px; }
   .trick-area { width: min(52vw, 300px); height: min(52vw, 300px); }
-  .score-chip { min-width: 92px; }
-  .score-num { font-size: 1.5rem; }
+  .score-chip { min-width: 148px; }
+  .score-num { font-size: 2rem; }
+  .team-name { font-size: 0.66rem; }
+  .team-seats { font-size: 0.72rem; }
+  .pt-pips i { width: 12px; height: 9px; }
+  .tricks-text { font-size: 0.48rem; }
 }
 
 @media (max-width: 620px) {
@@ -998,11 +1099,20 @@ body.no-webgl #app {
   .card.rank-ten .corner .c-rank { font-size: 0.62rem; }
   .corner .c-suit { font-size: 0.7rem; }
   .center-suit { font-size: 1.4rem; }
+  .center-suit.is-ace { font-size: 1.8rem; }
   .court-glyph { font-size: 1.3rem; }
+  .court-suit { font-size: 0.6rem; }
+  .pt-pips i { width: 6px; height: 6px; border-radius: 2px; }
+  .team-name { font-size: 0.5rem; }
+  .team-seats { font-size: 0.55rem; }
+  .tricks-text { font-size: 0.38rem; }
   .hud { padding: 0.5rem 0.6rem 0.1rem; }
   .score-label { font-size: 0.45rem; }
-  .score-chip { min-width: 74px; padding: 0.35em 0.5em 0.25em; }
-  .score-num { font-size: 1.2rem; }
+  .score-chip { min-width: 108px; padding: 0.35em 0.5em 0.3em; }
+  .score-num { font-size: 1.45rem; }
+  .score-unit { font-size: 0.42rem; }
+  .pt-pips i { width: 8px; height: 7px; }
+  .pt-pips { gap: 2px; }
   .pill { font-size: 0.55rem; padding: 0.35em 0.7em; }
   .nameplate { font-size: 0.55rem; }
   .turn-indicator { font-size: 0.58rem; padding: 0 1.2rem; }

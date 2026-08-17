@@ -1,5 +1,6 @@
 // DOM rendering, card artwork, and the animation "juice" for the Hokm table.
 import { SUIT_INFO, rankLabel, sortHand } from './deck.js';
+import { suitSVG } from './suits.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -18,6 +19,10 @@ export const el = {
   tricksTeamB: $('#tricks-team-b'),
   tricksBarA: $('#tricks-bar-a'),
   tricksBarB: $('#tricks-bar-b'),
+  panelA: $('#panel-a'),
+  panelB: $('#panel-b'),
+  pipsA: $('#pips-a'),
+  pipsB: $('#pips-b'),
   hakemBanner: $('#hakem-banner'),
   trumpBanner: $('#trump-banner'),
   btnMuteMusic: $('#btn-mute-music'),
@@ -62,31 +67,32 @@ const COURT_GLYPH = { 11: '♞', 12: '♛', 13: '♚' };
  * single large glyph rather than a grid of pips that would be illegible at
  * this size.
  */
-function buildCenter(card, info) {
+function buildCenter(card) {
   // Courts are J/Q/K only — the Ace (rank 14) takes an oversized suit pip.
   if (COURT_GLYPH[card.rank]) {
     return `
       <div class="center court">
         <span class="court-glyph">${COURT_GLYPH[card.rank]}</span>
+        ${suitSVG(card.suit, 'court-suit')}
       </div>`;
   }
   const ace = card.rank === 14 ? ' is-ace' : '';
-  return `<div class="center"><span class="center-suit${ace}">${info.symbol}</span></div>`;
+  return `<div class="center">${suitSVG(card.suit, `center-suit${ace}`)}</div>`;
 }
 
 export function createCardFace(card, { small = false } = {}) {
-  const info = SUIT_INFO[card.suit];
   const wrap = document.createElement('div');
-  wrap.className = `card ${info.color}${small ? ' card-sm' : ''}`;
+  wrap.className = `card suit-${card.suit.toLowerCase()}${small ? ' card-sm' : ''}`;
   if (card.rank === 10) wrap.classList.add('rank-ten');
   wrap.dataset.id = card.id;
   const label = rankLabel(card.rank);
+  const corner = `<span class="c-rank">${label}</span>${suitSVG(card.suit, 'c-suit')}`;
   wrap.innerHTML = `
     <div class="card-inner">
       <div class="card-face">
-        <div class="corner tl"><span class="c-rank">${label}</span><span class="c-suit">${info.symbol}</span></div>
-        ${buildCenter(card, info)}
-        <div class="corner br"><span class="c-rank">${label}</span><span class="c-suit">${info.symbol}</span></div>
+        <div class="corner tl">${corner}</div>
+        ${buildCenter(card)}
+        <div class="corner br">${corner}</div>
       </div>
     </div>`;
   return wrap;
@@ -188,11 +194,39 @@ export function updateTeamTricks(teamTricks) {
   }
 }
 
+const TARGET_POINTS = 7;
+
+/** Row of point markers filling up as a team banks hand wins. */
+function renderPips(container, value) {
+  if (container.childElementCount !== TARGET_POINTS) {
+    container.innerHTML = '';
+    for (let i = 0; i < TARGET_POINTS; i++) {
+      container.appendChild(document.createElement('i'));
+    }
+  }
+  [...container.children].forEach((pip, i) => {
+    const lit = i < value;
+    if (lit && !pip.classList.contains('lit')) {
+      pip.classList.add('lit', 'just-lit');
+      setTimeout(() => pip.classList.remove('just-lit'), 600);
+    } else if (!lit) {
+      pip.classList.remove('lit', 'just-lit');
+    }
+  });
+}
+
 export function updateScores(matchScore, bumpTeam = null) {
   el.scoreA.textContent = matchScore[0];
   el.scoreB.textContent = matchScore[1];
+  renderPips(el.pipsA, matchScore[0]);
+  renderPips(el.pipsB, matchScore[1]);
   if (bumpTeam === 0) pop(el.scoreA, 'bump');
   if (bumpTeam === 1) pop(el.scoreB, 'bump');
+
+  // Mark whichever side is ahead so the standing reads at a glance.
+  const [a, b] = matchScore;
+  el.panelA.classList.toggle('is-leading', a > b);
+  el.panelB.classList.toggle('is-leading', b > a);
 }
 
 function pop(node, cls = 'pop') {
@@ -207,13 +241,12 @@ export function setHakemBanner(text) {
 
 export function setTrumpBanner(suit) {
   if (!suit) {
-    el.trumpBanner.textContent = '';
+    el.trumpBanner.innerHTML = '';
     el.trumpBanner.className = 'pill trump-pill';
     return;
   }
-  const info = SUIT_INFO[suit];
-  el.trumpBanner.textContent = `HOKM ${info.symbol}`;
-  el.trumpBanner.className = `pill trump-pill is-set suit-${info.color}`;
+  el.trumpBanner.innerHTML = `<span>HOKM</span>${suitSVG(suit, 'pill-suit')}<span>${SUIT_INFO[suit].name}</span>`;
+  el.trumpBanner.className = `pill trump-pill is-set suit-${suit.toLowerCase()}`;
   pop(el.trumpBanner);
 }
 

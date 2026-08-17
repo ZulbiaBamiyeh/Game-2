@@ -8,12 +8,35 @@ import { hydrateSuitIcons } from './suits.js';
 import { cardBackImage } from './pixelart.js';
 import * as chatter from './chatter.js';
 
-// Drawn per match so the table has a different cast each time.
+// Drawn per match so the table has a different cast each time. Kept short so
+// they fit a nameplate, and spread widely across regions and languages.
 const BOT_NAMES = [
-  'Darius', 'Roya', 'Kian', 'Nasrin', 'Omid', 'Parisa', 'Reza', 'Shirin',
-  'Arash', 'Laleh', 'Babak', 'Mitra', 'Cyrus', 'Golnaz', 'Farhad', 'Yasmin',
-  'Sohrab', 'Anahita', 'Kaveh', 'Nazanin', 'Jamshid', 'Roxana', 'Bijan',
-  'Soraya', 'Hooman', 'Leila', 'Siavash', 'Pardis', 'Ramin', 'Firouzeh',
+  // West & Central Asia
+  'Darius', 'Roya', 'Kian', 'Nasrin', 'Omid', 'Parisa', 'Arash', 'Laleh',
+  'Cyrus', 'Anahita', 'Emre', 'Elif', 'Baran', 'Deniz', 'Aylin',
+  // Arab world & Levant
+  'Amir', 'Layla', 'Karim', 'Rania', 'Tariq', 'Yasmin', 'Zaid', 'Noor',
+  'Samir', 'Hala', 'Noa', 'Eitan', 'Tamar', 'Yonatan',
+  // South Asia
+  'Priya', 'Arjun', 'Ananya', 'Rohan', 'Meera', 'Vikram', 'Aisha', 'Dev',
+  'Ishaan', 'Kavya',
+  // East Asia
+  'Wei', 'Mei', 'Jian', 'Lin', 'Hao', 'Xiu', 'Kenji', 'Yuki', 'Haru', 'Aiko',
+  'Sora', 'Rin', 'Jisoo', 'Minho', 'Haeun', 'Jun',
+  // Southeast Asia & the Pacific
+  'Anh', 'Linh', 'Bayu', 'Sari', 'Mai', 'Nurul', 'Tane', 'Moana', 'Kai',
+  'Anika',
+  // Africa
+  'Kwame', 'Amara', 'Zuri', 'Kofi', 'Nia', 'Tendai', 'Ayo', 'Chidi', 'Sade',
+  'Thabo', 'Imani', 'Sekou',
+  // Europe
+  'Lucas', 'Emma', 'Mateo', 'Sofia', 'Elena', 'Hugo', 'Clara', 'Luca', 'Nora',
+  'Felix', 'Ivan', 'Katya', 'Milos', 'Zofia', 'Dmitri', 'Lena', 'Erik',
+  'Freya', 'Lars', 'Ingrid', 'Sigrid', 'Nikos', 'Thalia', 'Stavros', 'Daphne',
+  'Siobhan', 'Eoin',
+  // The Americas
+  'Diego', 'Camila', 'Rafa', 'Valeria', 'Santiago', 'Paloma', 'Mateus',
+  'Bianca', 'Dakota', 'Yara',
 ];
 
 function drawBotNames() {

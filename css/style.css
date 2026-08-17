@@ -689,11 +689,12 @@ body.no-webgl #app {
 .card.suit-c .card-face { color: var(--suit-c); }
 
 /* Inline suit artwork scales with the surrounding font size. */
-.suit-ico {
+.pixel-art {
   width: 1em;
   height: 1em;
   display: block;
   flex: 0 0 auto;
+  image-rendering: pixelated;
 }
 
 @keyframes card-idle {
@@ -722,7 +723,9 @@ body.no-webgl #app {
   font-size: 1.2rem;
   margin-top: 0.16em;
 }
-/* "10" is twice as wide as any other rank, so it needs to come down a step. */
+/* "10" is twice as wide as any other rank: it needs a smaller size and a
+   wider corner box, or the trailing zero is clipped off. */
+.card.rank-ten .corner { width: 2.1em; }
 .card.rank-ten .corner .c-rank { font-size: 1.12rem; }
 
 .center {
@@ -739,15 +742,34 @@ body.no-webgl #app {
 }
 .center-suit.is-ace { font-size: 3.4rem; }
 
-/* Court cards carry a pixel-art figure whose robe inherits the suit colour.
-   It is a background image rather than inline markup, so the sprite can be as
-   detailed as we like without adding thousands of rects to the page. */
+/* Court cards carry a double-headed pixel figure, as a real deck does. */
 .center.court {
   background-repeat: no-repeat;
-  background-position: center 58%;
-  background-size: auto 80%;
+  background-position: center;
+  background-size: auto 88%;
   image-rendering: pixelated;
 }
+
+/* Traditional pip arrangement for the number cards. */
+.center.pips {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(7, 1fr);
+  place-items: center;
+  padding: 7% 15%;
+}
+/* Sized from the card width so pips scale with every breakpoint on their own,
+   instead of needing a size override in each media query. */
+.pips .pip {
+  display: block;
+  width: 100%;
+  /* A pip is square, so this caps height too. Sized as large as the 7-row
+     grid allows, since pip legibility is the whole point of the layout. */
+  max-width: calc(var(--card-w) * 0.185);
+  line-height: 0;
+}
+.pips .pip.flip { transform: rotate(180deg); }
+.pips .pixel-art { width: 100%; height: auto; }
 
 /* hand-specific card behaviour */
 

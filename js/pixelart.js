@@ -1,12 +1,12 @@
-// Hand-drawn pixel art, rendered to SVG and cached as data-URI images.
+// All card artwork, drawn as pixel grids.
 //
-// Sprites are 40x56 character grids. Most characters map to the fixed palette
-// below; 'c', 'C' and 'L' are the card's suit colour at base, shadow and
-// highlight, so one sprite serves all four suits. Rows are merged into
-// horizontal runs, and each finished sprite is rasterised once and reused as a
-// background image — the DOM never carries the rects.
+// '.' is transparent, 'c'/'C'/'L' take the card's suit colour at base, shadow
+// and highlight, and the rest map to the fixed palette below. Court figures are
+// double-headed — the upper half repeated rotated 180° — the way a real court
+// card is printed. Grids are rendered to SVG rects with horizontal runs merged;
+// full-card artwork is rasterised once per rank+suit and reused as an image.
 
-const BASE_PALETTE = {
+const PALETTE = {
   o: '#14101c', // outline
   k: '#2a2036', // deep shadow
   s: '#f2c393', // skin
@@ -17,208 +17,321 @@ const BASE_PALETTE = {
   J: '#a8703f', // hair highlight
   g: '#ffc93f', // gold
   G: '#c98b14', // gold shadow
-  Y: '#ffe58a', // gold highlight
   w: '#fffaf0', // white
-  v: '#cfc7dc', // grey
+  v: '#cfc7dc', // steel / grey
   r: '#e0143c', // ruby
   b: '#2f7fe0', // sapphire
   n: '#17a05c', // emerald
-  f: '#f0ead8', // fur
-  F: '#cfc4a8', // fur shadow
   R: '#8e0b2c', // card-back crimson shadow
   d: '#e0a02a', // card-back lattice
 };
+// The card back is drawn in fixed colours rather than the suit's.
+const BACK_PALETTE = { g: '#ffc93f', G: '#c98b14', r: '#b8123c', R: '#8e0b2c', d: '#e0a02a' };
 
-const clamp = (v) => Math.max(0, Math.min(255, Math.round(v)));
-
-function parseHex(hex) {
+const toRGB = (hex) => {
   const n = parseInt(hex.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-const toHex = (rgb) => '#' + rgb.map((v) => clamp(v).toString(16).padStart(2, '0')).join('');
+};
+const toHex = (c) =>
+  '#' + c.map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
 
-/** Suit colour shaded darker (factor < 1) or lifted toward white (> 1). */
-function shade(hex, factor) {
-  const [r, g, b] = parseHex(hex);
-  if (factor <= 1) return toHex([r * factor, g * factor, b * factor]);
-  const t = factor - 1;
-  return toHex([r + (255 - r) * t, g + (255 - g) * t, b + (255 - b) * t]);
+/**
+ * Robe colour for a suit. Spades is nearly black, and black fill behind black
+ * outlines loses every detail, so dark suits are lifted toward a slate that
+ * still reads as the dark suit while keeping the figure legible.
+ */
+function robeFor(hex) {
+  const rgb = toRGB(hex);
+  const lum = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2];
+  if (lum >= 70) return hex;
+  const t = (70 - lum) / 70;
+  const target = [78, 76, 108];
+  return toHex(rgb.map((v, i) => v + (target[i] - v) * t));
 }
+const mixWhite = (hex, t) => toHex(toRGB(hex).map((v) => v + (255 - v) * t));
+const darken = (hex, f) => toHex(toRGB(hex).map((v) => v * f));
+
+export const SUIT_SPRITES = {
+  S: [
+    '.......c.......',
+    '......ccc......',
+    '.....ccccc.....',
+    '....ccccccc....',
+    '...ccccccccc...',
+    '..ccccccccccc..',
+    '.ccccccccccccc.',
+    'ccccccccccccccc',
+    'ccccccccccccccc',
+    'ccccccccccccccc',
+    '.cccc.ccc.cccc.',
+    '..cc..ccc..cc..',
+    '......ccc......',
+    '....ccccccc....',
+    '...ccccccccc...',
+  ],
+  H: [
+    '..cccc...cccc..',
+    '.ccccccccccccc.',
+    'ccccccccccccccc',
+    'ccccccccccccccc',
+    'ccccccccccccccc',
+    '.ccccccccccccc.',
+    '.ccccccccccccc.',
+    '..ccccccccccc..',
+    '..ccccccccccc..',
+    '...ccccccccc...',
+    '....ccccccc....',
+    '.....ccccc.....',
+    '......ccc......',
+    '.......c.......',
+    '...............',
+  ],
+  D: [
+    '.......c.......',
+    '......ccc......',
+    '.....ccccc.....',
+    '....ccccccc....',
+    '...ccccccccc...',
+    '..ccccccccccc..',
+    '.ccccccccccccc.',
+    'ccccccccccccccc',
+    '.ccccccccccccc.',
+    '..ccccccccccc..',
+    '...ccccccccc...',
+    '....ccccccc....',
+    '.....ccccc.....',
+    '......ccc......',
+    '.......c.......',
+  ],
+  C: [
+    '.....ccccc.....',
+    '....ccccccc....',
+    '...ccccccccc...',
+    '...ccccccccc...',
+    '....ccccccc....',
+    '.ccc..ccc..ccc.',
+    'ccccc.ccc.ccccc',
+    'ccccccccccccccc',
+    'ccccc.ccc.ccccc',
+    '.ccc..ccc..ccc.',
+    '......ccc......',
+    '......ccc......',
+    '.....ccccc.....',
+    '....ccccccc....',
+    '...............',
+  ],
+};
 
 export const COURT_SPRITES = {
   J: [
-    '.................................oovo...',
-    '................................ovovo...',
-    '...............................ovvvvo...',
-    '..............................ovvvvvvo..',
-    '.............................ovvvvvvo...',
-    '.............................ovvvvvvo...',
-    '....................o........ovvvvvvo...',
-    '..............ooooooLoooooo..ovvvvvo....',
-    '...........oooLLLLLLLLLLLccoovvvvvvo....',
-    '..........ocLLLLLLLLLLLLLccccCvvvvo.....',
-    '.........oLLLLLLLLLLLLLLLcccccvvvo......',
-    '........ocLLLLLLLLLLLLLLLcccccvvvo......',
-    '.......ocLLLLLLLLLLLLLLLLcccccvvvo......',
-    '.......occLLLLLLLLLLLLLLLccccccvCo......',
-    '......occcLLLLLLLLLLLLLLLccccccCCCo.....',
-    '.......occccLLLLLLLLLLLLLccccCCCCo......',
-    '.......occccccLLLLLLLLLLLccCCCCCCo......',
-    '......oggggggggggggggggggGGGGGGGGGo.....',
-    '......oggggggggggggggggggGGGGGGGGGo.....',
-    '......oGGGGGGGGGGGGGGGGGGGGGGGGGGGo.....',
-    '......oGGGGGGGGGGGGGGGGGGGGGGGGGGGo.....',
-    '.......oooJJJjjjjjHHcHHjjjjjhhhooo......',
-    '.........oJJJjjjjjHHHHHjjjjjhhho........',
-    '........oJJJsHHHHHHHHHHHHsssShhho.......',
-    '........oJJJsssowosssssowoSSShhho.......',
-    '........oJJJsssooosssssoooSSShhho.......',
-    '........oJJJsssooosssssoooSSShhho.......',
-    '.......oJJJssssssssssssssSSSSShhho......',
-    '......oJJhJJsssssssSSSsssSSSShhhhho.....',
-    '......oJhhhJsssssssssssssSSSShhhhho.....',
-    '.....oJhhhJhsssskssssssskSSSShhhhhho....',
-    '......oJhhhJssssskkkkkkksSSSShhhhho.....',
-    '......oJJhJJJssssssssssssSSShhhhhho.....',
-    '.......ooJJJJssssssssssssSSShhhhoo......',
-    '.........ooJJJsssssssssssSShhhoo........',
-    '...........oJJJssssssssssShhho..........',
-    '........ooowwJJJJsssssssJhhhvvooo.......',
-    '.......owwwwwwJJJJJJsJJJJhhvvvvvvo......',
-    '......owwwwwvvvvJJJJJJJJJvvvvvvvvvo.....',
-    '.....owwwwvvvvvvvvvvJvvvvvvvvvvvvvvo....',
-    '....owwwwvvvvvvvvvvvvvvvvvvvvvvvvvvvo...',
-    '...ooowwwwvvvvvvvvvvvvvvvvvvvvvvvvvoo...',
-    '..occccwwwwwvvvvvvvvvvvvvvvvvvvvvvCCCo..',
-    '..occcccwwwwwwwwwwwwvwwwwvvvvvvvvCCCCo..',
-    '..occccccccwwwwwwwwwwwwwwvvvvvCCCCCCCCo.',
-    '..occccccccccccLLLLLwLLLLcCCCCCCCCCCCCo.',
-    '.occcccccccccccLLLLgggLLLcCCCCCCCCCCCCCo',
-    '..occccccccccccLLLLLgLLLLcCCCCCCCCCCCCo.',
-    '..occccccccccccLLLLLLLLLLcCCCCCCCCCCCCo.',
-    '..occccccccccccLLLLLgLLLLcCCCCCCCCCCCo..',
-    '..occccccccccccLLLLgggLLLcCCCCCCCCCCCo..',
-    '..occccccccccccLLLLLgLLLLcCCCCCCCCCCCo..',
-    '..occccccccccccLLLLLLLLLLcCCCCCCCCCCCo..',
-    '..occccccccccccLLLLLgLLLLcCCCCCCCCCCCo..',
-    '..occccccccccccLLLLgggLLLcCCCCCCCCCCCo..',
-    '..occccccccccccLLLLLgLLLLcCCCCCCCCCCCo..',
+    '...................................oowwwo.......',
+    '........................o.........owowwwo.......',
+    '.................oooooooLooooooo.owwwwwwo.......',
+    '...............oocLLLLLLLLLLLLLcowwwwwwwo.......',
+    '.............oocLLLLLLLLLLLLLLLLLwwwwwwwo.......',
+    '............occLLLLLLLLLLLLLLLLLLwwwwwwwo.......',
+    '...........occLLLLLLLLLLLLLLLLLLLwwwwwoo........',
+    '...........occcLLLLLLLLLLLLLLLLLLwwwwwo.........',
+    '..........occcccLLLLLLLLLLLLLLLLLcwwwco.........',
+    '....oooooogggggggggggggggggggggggggwgggo........',
+    '...ogggggogggggggggggggggggggggggggggggo........',
+    '...ogggggoGGGGGGGGGGGGGGGGGGGGGGGGGGGGGo........',
+    '...ogggggoGGGGGGGGGGGGGGGGGGGGGGGGGGGGGo........',
+    '....ovvvo.ooooJJJcccccccccccccccJJJoooo.........',
+    '....ovvvo...oJJJJsswoosscsswoossJJJJo...........',
+    '....ovvvo..ooJJJJssooosssssooossJJJJoo..........',
+    '....ovvvoooJoJJJsssooosssssooosssJJJoJoo........',
+    '....ovvvoJJJJJJJJsssssssssssssssJJJJJJJJo.......',
+    '....ovvvJJJhJJJJJssssssSSSssssssJJJJJhJJJo......',
+    '....ovvvJJhhhJJJJsssksssssssksssJJJJhhhJJo......',
+    '....ovvvJhhhhhJJJJssskkkkkkksssJJJJhhhhhJJo.....',
+    '....ovvvJJhhhJJJJJsssssssssssssJJJJJhhhJJo......',
+    '....ovvvJJJhJJJJJJJsssssssssssJJJJJJJhJJJo......',
+    '....ovvvoJJJJJJJJJJJJsssssssJJJJJJJJJJJJo.......',
+    '....ovvvcccJwwJJJJJJJJJJsJJJJJJJJJJwwJccco......',
+    '....ovvvcccwwwwJJJJJJJJJJJJJJJJJJJwwwwcccco.....',
+    '....ovvvccccwwwwJJJJJJJJJJJJJJJJJwwwwcccccco....',
+    '....ovvvcccccwwwwwJJJJJJJJJJJJJwwwwwcccccccco...',
+    '....ovvvccccccccwwwwJJJJJJJJJwwwwccccccccccco...',
+    '....ovvvccccccccccccccccJccccccccccccccccccco...',
+    '...ocvvvccccccccccccccccccccccccccccccccccccco..',
+    '....ovvvcccccccccccccccccccccccccccccccccccco...',
+    '....ovvvcccccccccccccccccccccccccccccccccccco...',
+    '....ovvvcccccccccccccccccccccccccccccccccccco...',
+    '...occccccccccccccccccccccccccccccccccccvvvo....',
+    '...occccccccccccccccccccccccccccccccccccvvvo....',
+    '...occccccccccccccccccccccccccccccccccccvvvo....',
+    '..occcccccccccccccccccccccccccccccccccccvvvco...',
+    '...occcccccccccccccccccJccccccccccccccccvvvo....',
+    '...occcccccccccwwwwJJJJJJJJJwwwwccccccccvvvo....',
+    '...occccccccwwwwwJJJJJJJJJJJJJwwwwwcccccvvvo....',
+    '....occccccwwwwJJJJJJJJJJJJJJJJJwwwwccccvvvo....',
+    '.....occccwwwwJJJJJJJJJJJJJJJJJJJwwwwcccvvvo....',
+    '......occcJwwJJJJJJJJJJsJJJJJJJJJJwwJcccvvvo....',
+    '.......oJJJJJJJJJJJJsssssssJJJJJJJJJJJJovvvo....',
+    '......oJJJhJJJJJJJsssssssssssJJJJJJJhJJJvvvo....',
+    '......oJJhhhJJJJJsssssssssssssJJJJJhhhJJvvvo....',
+    '.....oJJhhhhhJJJJssskkkkkkksssJJJJhhhhhJvvvo....',
+    '......oJJhhhJJJJsssksssssssksssJJJJhhhJJvvvo....',
+    '......oJJJhJJJJJssssssSSSssssssJJJJJhJJJvvvo....',
+    '.......oJJJJJJJJsssssssssssssssJJJJJJJJovvvo....',
+    '........ooJoJJJsssooosssssooosssJJJoJooovvvo....',
+    '..........ooJJJJssooosssssooossJJJJoo..ovvvo....',
+    '...........oJJJJssoowsscssoowssJJJJo...ovvvo....',
+    '.........ooooJJJcccccccccccccccJJJoooo.ovvvo....',
+    '........oGGGGGGGGGGGGGGGGGGGGGGGGGGGGGogggggo...',
+    '........oGGGGGGGGGGGGGGGGGGGGGGGGGGGGGogggggo...',
+    '........ogggggggggggggggggggggggggggggogggggo...',
+    '........ogggwgggggggggggggggggggggggggoooooo....',
+    '.........ocwwwcLLLLLLLLLLLLLLLLLccccco..........',
+    '.........owwwwwLLLLLLLLLLLLLLLLLLccco...........',
+    '........oowwwwwLLLLLLLLLLLLLLLLLLLcco...........',
+    '.......owwwwwwwLLLLLLLLLLLLLLLLLLcco............',
+    '.......owwwwwwwLLLLLLLLLLLLLLLLLcoo.............',
+    '.......owwwwwwwocLLLLLLLLLLLLLcoo...............',
+    '.......owwwwwwo.oooooooLooooooo.................',
+    '.......owwwowo.........o........................',
+    '.......owwwoo...................................',
   ],
   Q: [
-    '........................................',
-    '........................................',
-    '....................o...................',
-    '...................oro..................',
-    '...................ogo..................',
-    '..............o...ogggo...o.............',
-    '.............ono..ogggo..obo............',
-    '.............ogo..ogggo..oGo............',
-    '............ogggoogggggooGGGo...........',
-    '............ogggoogggggooGGGo...........',
-    '...........oogggoogggggooGGGo...........',
-    '..........ogggggggggrggggGGGGo..........',
-    '..........oggggggggrrrgggGGGGo..........',
-    '..........ogggggggggrggggGGGGo..........',
-    '..........oGGGGGGGGGGGGGGGGGGjo.........',
-    '..........oGGGGGGGGGGGGGGGGGGjo.........',
-    '.........ohhhhhhhhhhhhhhhjjjjjjo........',
-    '.........ohhhhhhhhhhhhhhhjjjjjjo........',
-    '........ohhhhhhhhhhhhhhhhjjjjjjjo.......',
-    '.........ohhjjjjjhhhhhhhjjjjjjjo........',
-    '.........ohhjjjjjHHHHHHHjjjjjjjo........',
-    '........ohhhsHHHHHHHHHHHHsssSjjjo.......',
-    '.......ohhhhsHHowoHHHHHowossSjjjjo......',
-    '.......ohhhhsssooosssssoooSSSjjjjo......',
-    '.......ohhhhsssooosssssoooSSSjjjjo......',
-    '......ohhhhhsssssssssssssSSSSjjjjjo.....',
-    '......ohhhhssssssssSSSsssSSSSSjjjjo.....',
-    '.....ohhhhhhsssssssssssssSSSSjjjjjjo....',
-    '.....ohhhhhhssssssssSssssSSSSjjjjjjo....',
-    '.....ohhhhhhsssssssssssssSSSSjjjjjjo....',
-    '.....ohhhhhhssssssrrrrrssSSSSjjjjjjo....',
-    '.....ohhhhhhssssssrrrrrssSSSSjjjjjjo....',
-    '.....ohhhhhhhssssssssssssSSSjjjjjjjo....',
-    '.....ohhhhhhhhsssssssssssSSjjjjjjjjo....',
-    '....ohhhhhhhhhsssssssssssSSjjjjjjjjjo...',
-    '....ohhhhhhhhhhssssssssssSjjjjjjjjjo....',
-    '....ohhhhhhhhhhhhssssssshjjjjjjjjjjo....',
-    '....ohhhhhhhhhhhhhhhshhhhjjjjjjjjjjo....',
-    '....ohhhhhhhhhhhhhhhhhhhhjjjjjjjjjjo....',
-    '....ohhhhhhhghhhghhhghhhgjjjGjjjjjjo....',
-    '....ohhhcccgggcgggcgggcggGCGGGCCCjjo....',
-    '..ooohccccccgcccgcccgcccgCCCGCCCCCCooo..',
-    '.occccLLLLLLLLLLLLLLLLLLLcccccccccCCCCo.',
-    '.occccLLLLLLLLLLLLLLLLLLLcccccccccCCCCo.',
-    '.occccLLLLLLLLLLLLLLLLLLLcccccccccCCCCCo',
-    '.occcccccccccccccccccccccCCCCCCCCCCCCCCo',
-    'occccccccccccccccccccccccCCCCCCCCCCCCCCC',
-    '.occcccccccccccccccccccccCCCCCCCCCCCCCCo',
-    '.occcccccccccccccccccccccCCCCCCCCCCCCCCo',
-    '.occcccccccccccccccccccccCCCCCCCCCCCCCo.',
-    '.occcccccccccccccccccccccCCCCCCCCCCCCCo.',
-    '.occcccccccccccccccccccccCCCCCCCCCCCCCo.',
-    '.occcccccccccccccccccccccCCCCCCCCCCCCCo.',
-    '.occcccccccccccccccccccccCCCCCCCCCCCCCo.',
-    '.occcccccccccccccccccccccCCCCCCCCCCCCCo.',
-    '.occcccccccccccccccccccccCCCCCCCCCCCCCo.',
+    '........................o.......................',
+    '.......................oro......................',
+    '.....o............o....ogo....o.................',
+    '....oro..........ono..ogggo..obo................',
+    '...orrro.........ogoooogggoooogo................',
+    '..orrrrro.......ogggjjgggggjjgggo...............',
+    '...orrro.......ojgggjjgggggjjgggjo..............',
+    '..owwgwwo.....ogggggggggggggggggggo.............',
+    '.orrgggrro...ojgggggggggggggggggggjo............',
+    'orrrrgrrrro...ogggggggggrgggggggggo.............',
+    'orrrrwrrrro...oGGGGGGGGGGGGGGGGGGGo.............',
+    '.orrrorrro...ohGGGGGGGGGGGGGGGGGGGho............',
+    '..ooonnoo...ohhhhsHHHHHHHHHHHHHshhhho...........',
+    '....onno...ohhhhhssssssssssssssshhhhho..........',
+    '....onno...ohhhhhsswoossssswoosshhhhho..........',
+    '....onno..ohhhhhhssooosssssooosshhhhhho.........',
+    '....onno..ohhhhhsssooosssssooossshhhhho.........',
+    '....onno..ohhhhhhssssssssssssssshhhhhho.........',
+    '....onno..ohhhhhhssssssSSSsssssshhhhhho.........',
+    '....onno..ohhhhhhssssssssssssssshhhhhho.........',
+    '....onno.ohhhhhhhsssssrrrrrssssshhhhhhho........',
+    '....onno.ohhhhhhhhssssrrrrrsssshhhhhhhho........',
+    '....onno.ohhhhhhhhhssssssssssshhhhhhhhho........',
+    '....onnooohhhhhhhhhhssssssssshhhhhhhhhhoo.......',
+    '....onnocchhhhhhhhhhhhssssshhhhhhhhhhhhcco......',
+    '....onnccchhhhhhhhhhhhhhhhhhhhhhhhhhhhhccco.....',
+    '....onnccchhhhhhhhhhhhhhhhhhhhhhhhhhhhhcccco....',
+    '....onnccccchhhhhhhhhhhhhhhhhhhhhhhhhccccccco...',
+    '....onncccccchhhhhhhhhhhhhhhhhhhhhhhcccccccco...',
+    '....onnccccccchhhhhhhhhhhhhhhhhhhhhccccccccco...',
+    '...ocnncccccccchhhhhhhhhhhhhhhhhhhccccccccccco..',
+    '....onnccccccccchhhhhhhhhhhhhhhhhccccccccccco...',
+    '....onncccccccccchhhhhhhhhhhhhhhcccccccccccco...',
+    '....onncccccccccccchhhhhhhhhhhcccccccccccccco...',
+    '...occcccccccccccchhhhhhhhhhhccccccccccccnno....',
+    '...occcccccccccchhhhhhhhhhhhhhhccccccccccnno....',
+    '...occccccccccchhhhhhhhhhhhhhhhhcccccccccnno....',
+    '..occccccccccchhhhhhhhhhhhhhhhhhhccccccccnnco...',
+    '...occccccccchhhhhhhhhhhhhhhhhhhhhcccccccnno....',
+    '...occcccccchhhhhhhhhhhhhhhhhhhhhhhccccccnno....',
+    '...occccccchhhhhhhhhhhhhhhhhhhhhhhhhcccccnno....',
+    '....occcchhhhhhhhhhhhhhhhhhhhhhhhhhhhhcccnno....',
+    '.....occchhhhhhhhhhhhhhhhhhhhhhhhhhhhhcccnno....',
+    '......occhhhhhhhhhhhhssssshhhhhhhhhhhhcconno....',
+    '.......oohhhhhhhhhhssssssssshhhhhhhhhhooonno....',
+    '........ohhhhhhhhhssssssssssshhhhhhhhho.onno....',
+    '........ohhhhhhhhssssrrrrrsssshhhhhhhho.onno....',
+    '........ohhhhhhhsssssrrrrrssssshhhhhhho.onno....',
+    '.........ohhhhhhssssssssssssssshhhhhho..onno....',
+    '.........ohhhhhhssssssSSSsssssshhhhhho..onno....',
+    '.........ohhhhhhssssssssssssssshhhhhho..onno....',
+    '.........ohhhhhsssooosssssooossshhhhho..onno....',
+    '.........ohhhhhhssooosssssooosshhhhhho..onno....',
+    '..........ohhhhhssoowsssssoowsshhhhho...onno....',
+    '..........ohhhhhssssssssssssssshhhhho...onno....',
+    '...........ohhhhsHHHHHHHHHHHHHshhhho...oonnooo..',
+    '............ohGGGGGGGGGGGGGGGGGGGho...orrrorrro.',
+    '.............oGGGGGGGGGGGGGGGGGGGo...orrrrwrrrro',
+    '.............ogggggggggrgggggggggo...orrrrgrrrro',
+    '............ojgggggggggggggggggggjo...orrgggrro.',
+    '.............ogggggggggggggggggggo.....owwgwwo..',
+    '..............ojgggjjgggggjjgggjo.......orrro...',
+    '...............ogggjjgggggjjgggo.......orrrrro..',
+    '................ogoooogggoooogo.........orrro...',
+    '................obo..ogggo..ono..........oro....',
+    '.................o....ogo....o............o.....',
+    '......................oro.......................',
+    '.......................o........................',
   ],
   K: [
-    '...................obo..................',
-    '..........o........ogo........o.........',
-    '.........oro......ogggo......ono........',
-    '.........ogo......ogggo......oGo........',
-    '........ogggo.....ogggo.....oGGGo.......',
-    '........ogggo....ogggggo....oGGGo.......',
-    '........ogggo....ogggggo....oGGGo.......',
-    '.......ogggggo..ogggggggo..oGGGGGo......',
-    '.......ogggggo..ogggggggo..oGGGGGo......',
-    '.......ogggggoooogggggggooooGGGGGo......',
-    '......oggggggggggggggggggGGGGGGGGGo.....',
-    '......ogggggggrgggggbggggGnGGGGGGGo.....',
-    '.......ogggggrrrgggbbbgggnnnGGGGoo......',
-    '.......oggggggrgggggbggggGnGGGGGo.......',
-    '.......oGGGGGGGGGGGGGGGGGGGGGGGGo.......',
-    '.......oGGGGGGGGGGGGGGGGGGGGGGGGo.......',
-    '........oooojjjjjHHHHHHHjjjjjooo........',
-    '...........ojjjjjHHHHHHHjjjjjo..........',
-    '..........ojjHHHHHHHHHHHHsssjjo.........',
-    '.........ojjsHHowoHHHHHowossSjjo........',
-    '.........ojjsHHoooHHHHHooossSjjo........',
-    '........ojjjsssooosssssoooSSSjjjo.......',
-    '........ojjjsssssssssssssSSSSjjjo.......',
-    '........ojjjsssssssSSSsssSSSSjjjo.......',
-    '........ojjssssssssSSSsssSSSSSjjo.......',
-    '........ojjjssssssssSssssSSSSjjjo.......',
-    '.......ojjjjsssssssssssssSSSSjjjjo......',
-    '........ojjjsssssssssssssSSSSjjjo.......',
-    '........ojjjshhhhhhhhhhhhjjjSjjjo.......',
-    '........ojjjshhhhhhhhhhhhjjjSjjjo.......',
-    '........ojjjhhhJJJJJJJJJJJjjjjjjo.......',
-    '........ojjjhhJJJJJkkkJJJJJjjjjjo.......',
-    '.........ojhhhJJJJJkkkJJJJJjjjjo........',
-    '.........ojhhhJJJJJkkkJJJJJjjjjo........',
-    '..........ohhJJJJJJJJJJJJJJJjjo.........',
-    '..........ohhhJJJJJJJJJJJJJjjjo.........',
-    '.........ohhhhJJJJJJJJJJJJJjjjjo........',
-    '..........ohhhhhhhhhhhhhhjjjjjo.........',
-    '.......oooohhhhhhhhhhhhhhjjjjjoooo......',
-    '..ooooocccchhhhhhhhhhhhhhjjjjjCCCCoooo..',
-    '.occfffffffhhhhhhhhhhhhhhjjjjjFFFFFFCCo.',
-    '.occfFfffFffhhhhhhhhhhhhhjjjjFFFFFFFCCo.',
-    '.occffFfffFfhhhhhhhhhhhhhjjjjFFFFFFFCCCo',
-    'ooccfffffffffhhhhhhhhhhhhjjjFFFFFFFFCCCo',
-    'cccccccccccccchhhhhhhhhhhjjCCCCCCCCCCCCC',
-    'cccccccccccccccchhhhhhhhhCCCCCCCCCCCCCCC',
-    'cccccccccccccccccccchccccCCCCCCCCCCCCCCC',
-    'ccccccccccccccccccgggggccCCCCCCCCCCCCCCC',
-    'cccccccccccccccccgggrgggcCCCCCCCCCCCCCCC',
-    'cccccccccccccccccggrrrggcCCCCCCCCCCCCCCC',
-    'ccccccccccccccccggrrrrrggCCCCCCCCCCCCCCC',
-    'cccccccccccccccccggrrrggcCCCCCCCCCCCCCCC',
-    'cccccccccccccccccgggrgggcCCCCCCCCCCCCCCC',
-    'ccccccccccccccccccgggggccCCCCCCCCCCCCCCC',
-    'ccccccccccccccccccccgccccCCCCCCCCCCCCCCC',
-    'cccccccccccccccccccccccccCCCCCCCCCCCCCCC',
+    '...............o.......obo.......o..............',
+    '..............oro.....ogggo.....ono.............',
+    '.............ogggo....ogggo....ogggo............',
+    '.....o.......ogggo...ogggggo...ogggo............',
+    '....ogo......ogggo...ogggggo...ogggo............',
+    '...ogggo...oogggggooogggggggooogggggoo..........',
+    '..ogggggo.ogggggggggggggggggggggggggggo.........',
+    '...ogggo..ogggggggggggggggggggggggggggo.........',
+    '..ogggggo.oggggggrggggggbggggggnggggggo.........',
+    '..ogggggo.oGGGGGGGGGGGGGGGGGGGGGGGGGGGo.........',
+    '...ovvvo..oGGGGGGGGGGGGGGGGGGGGGGGGGGGo.........',
+    '...ovvvo...ooojjjjHHHHHHHHHHHHHjjjjooo..........',
+    '...ovvvo.....ojjjsHHHHHHHHHHHHHsjjjo............',
+    '...ovvvo....ojjjjsswoossssswoossjjjjo...........',
+    '...ovvvo....ojjjjssooosssssooossjjjjo...........',
+    '...ovvvo....ojjjsssooosssssooosssjjjo...........',
+    '...ovvvo....ojjjjsssssssssssssssjjjjo...........',
+    '...ovvvo...ojjjjjsshhhhhhhhhhhssjjjjjo..........',
+    '...ovvvo....ojjjjshhhjjjjjjjhhhsjjjjo...........',
+    '...ovvvo....ojjjjhhhjjjjjjjjjhhhjjjjo...........',
+    '...ovvvo....ojjjjhhjjjjjjjjjjjhhjjjjo...........',
+    '...ovvvo....ojjjhhhhjjjjjjjjjhhhhjjjo...........',
+    '...ovvvo..oooojjjhhhhhhhhhhhhhhhjjjoooo.........',
+    '...ovvvoooccccjjjhhhhhhhhhhhhhhhjjjccccoo.......',
+    '...ovvvocccccccjjjhhhhhhhhhhhhhjjjccccccco......',
+    '...ovvvccccccccwjjjhhhhhhhhhhhjjjwcccccccco.....',
+    '...ovvvccccccccwwwjjhhhhhhhhhjjwwwccccccccco....',
+    '...ovvvcccccccccccccjjjjhjjjjccccccccccccccco...',
+    '...ovvvcccccccccccccccggjggccccccccccccccccco...',
+    '...ovvvcccccccccccccccggrggccccccccccccccccco...',
+    '...ovvvccccccccccccccggrrrggccccccccccccccccco..',
+    '...ovvvcccccccccccccccggrggccccccccccccccccco...',
+    '...ovvvcccccccccccccccgggggccccccccccccccccco...',
+    '...ovvvcccccccccccccccccgccccccccccccccccccco...',
+    '...occcccccccccccccccccgcccccccccccccccccvvvo...',
+    '...occcccccccccccccccgggggcccccccccccccccvvvo...',
+    '...occcccccccccccccccggrggcccccccccccccccvvvo...',
+    '..occcccccccccccccccggrrrggccccccccccccccvvvo...',
+    '...occcccccccccccccccggrggcccccccccccccccvvvo...',
+    '...occcccccccccccccccggjggcccccccccccccccvvvo...',
+    '...occcccccccccccccjjjjhjjjjcccccccccccccvvvo...',
+    '....occcccccccwwwjjhhhhhhhhhjjwwwccccccccvvvo...',
+    '.....occccccccwjjjhhhhhhhhhhhjjjwccccccccvvvo...',
+    '......occcccccjjjhhhhhhhhhhhhhjjjcccccccovvvo...',
+    '.......ooccccjjjhhhhhhhhhhhhhhhjjjccccooovvvo...',
+    '.........oooojjjhhhhhhhhhhhhhhhjjjoooo..ovvvo...',
+    '...........ojjjhhhhjjjjjjjjjhhhhjjjo....ovvvo...',
+    '...........ojjjjhhjjjjjjjjjjjhhjjjjo....ovvvo...',
+    '...........ojjjjhhhjjjjjjjjjhhhjjjjo....ovvvo...',
+    '...........ojjjjshhhjjjjjjjhhhsjjjjo....ovvvo...',
+    '..........ojjjjjsshhhhhhhhhhhssjjjjjo...ovvvo...',
+    '...........ojjjjsssssssssssssssjjjjo....ovvvo...',
+    '...........ojjjsssooosssssooosssjjjo....ovvvo...',
+    '...........ojjjjssooosssssooossjjjjo....ovvvo...',
+    '...........ojjjjssoowsssssoowssjjjjo....ovvvo...',
+    '............ojjjsHHHHHHHHHHHHHsjjjo.....ovvvo...',
+    '..........ooojjjjHHHHHHHHHHHHHjjjjooo...ovvvo...',
+    '.........oGGGGGGGGGGGGGGGGGGGGGGGGGGGo..ovvvo...',
+    '.........oGGGGGGGGGGGGGGGGGGGGGGGGGGGo.ogggggo..',
+    '.........oggggggnggggggbggggggrggggggo.ogggggo..',
+    '.........ogggggggggggggggggggggggggggo..ogggo...',
+    '.........ogggggggggggggggggggggggggggo.ogggggo..',
+    '..........oogggggooogggggggooogggggoo...ogggo...',
+    '............ogggo...ogggggo...ogggo......ogo....',
+    '............ogggo...ogggggo...ogggo.......o.....',
+    '............ogggo....ogggo....ogggo.............',
+    '.............ono.....ogggo.....oro..............',
+    '..............o.......obo.......o...............',
   ],
 };
 
@@ -243,55 +356,57 @@ export const CARD_BACK = [
   'ggggggggggggg',
 ];
 
-/** Character grid to SVG, merging horizontal runs of one colour into a rect. */
-function spriteSVG(grid, suitColor) {
-  const palette = Object.assign({}, BASE_PALETTE);
-  if (suitColor) {
-    palette.c = suitColor;
-    palette.C = shade(suitColor, 0.62);
-    palette.L = shade(suitColor, 1.38);
-  }
-
+/** Grid to SVG, merging horizontal runs of one colour into a single rect. */
+function gridSVG(grid, palette, { inline = false } = {}) {
   const h = grid.length;
   const w = grid[0].length;
   const parts = [];
-
   for (let y = 0; y < h; y++) {
-    const rowStr = grid[y];
+    const row = grid[y];
     let x = 0;
     while (x < w) {
-      const ch = rowStr[x];
+      const ch = row[x];
       if (ch === '.') { x++; continue; }
       let run = 1;
-      while (x + run < w && rowStr[x + run] === ch) run++;
+      while (x + run < w && row[x + run] === ch) run++;
       const fill = palette[ch];
       if (fill) parts.push(`<rect x="${x}" y="${y}" width="${run}" height="1" fill="${fill}"/>`);
       x += run;
     }
   }
+  // The xmlns matters: without it the markup renders inline but fails to load
+  // when handed to CSS as a data URI.
+  const cls = inline ? ' class="pixel-art"' : '';
+  return `<svg xmlns="http://www.w3.org/2000/svg"${cls} viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges">${parts.join('')}</svg>`;
+}
 
-  // The xmlns is required: without it the markup renders inline but fails to
-  // load when used as a data-URI background image.
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges">${parts.join('')}</svg>`;
+function suitPalette(hex) {
+  const robe = robeFor(hex);
+  return Object.assign({}, PALETTE, { c: robe, C: darken(robe, 0.62), L: mixWhite(robe, 0.38) });
+}
+
+/** Inline pixel suit symbol, in the suit's own colour. */
+export function suitSVG(suit, className = '') {
+  const svg = gridSVG(SUIT_SPRITES[suit], { c: 'currentColor' }, { inline: true });
+  return className ? svg.replace('class="pixel-art"', `class="pixel-art ${className}"`) : svg;
 }
 
 const toURI = (svg) => `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
 
 const courtCache = new Map();
-
-/** CSS url() for a court figure, rasterised once per rank+suit pairing. */
-export function courtImage(rank, suitColor) {
+/** CSS url() for a double-headed court figure, rasterised once per rank+suit. */
+export function courtImage(rank, suitHex) {
   const key = { 11: 'J', 12: 'Q', 13: 'K' }[rank];
   if (!key) return '';
-  const id = `${key}${suitColor}`;
+  const id = key + suitHex;
   if (!courtCache.has(id)) {
-    courtCache.set(id, toURI(spriteSVG(COURT_SPRITES[key], suitColor)));
+    courtCache.set(id, toURI(gridSVG(COURT_SPRITES[key], suitPalette(suitHex))));
   }
   return courtCache.get(id);
 }
 
 let backURI = null;
 export function cardBackImage() {
-  if (!backURI) backURI = toURI(spriteSVG(CARD_BACK, null));
+  if (!backURI) backURI = toURI(gridSVG(CARD_BACK, BACK_PALETTE));
   return backURI;
 }

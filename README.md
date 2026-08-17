@@ -5,9 +5,9 @@ trick-taking card game, styled like a neon casino-lounge roguelike — chunky
 pixel type, glowing card outlines, drifting color-blob backgrounds, and a
 synthesized jazzy chiptune soundtrack.
 
-Play at [zulbiabamiyeh.github.io/Game-2](https://zulbiabamiyeh.github.io/Game-2/)
-once GitHub Pages is enabled for this repo (Settings → Pages → deploy from
-`main`), or run it locally (see below).
+Play it at
+**[zulbiabamiyeh.github.io/Game-2](https://zulbiabamiyeh.github.io/Game-2/)**,
+or run it locally (see below). Every push deploys through GitHub Actions.
 
 ## About the assets
 
@@ -31,15 +31,17 @@ all — it runs fully offline.
   domain-warped fbm noise, which produces the slow liquid-marble swirl.
   Falls back to a CSS gradient where WebGL is unavailable.
 - **Card art** — hand-drawn pixel art (`js/pixelart.js`). The Jack, Queen and
-  King are 40x56 character-grid sprites with multi-tone shading — jewelled
-  crowns, flowing hair, fur trim, a feathered cap — whose robes take the
-  colour of their suit, derived at render time from a single base sprite. The
-  card back is an ornate gold-and-crimson lattice. Each finished sprite is
-  rasterised once and reused as a background image, so the artwork can be as
-  detailed as it likes without putting a single rect in the DOM.
-- **Suits** — drawn as SVG paths (`js/suits.js`) with deliberately distinct
-  silhouettes, on a four-colour deck — spades black, hearts red, diamonds
-  blue, clubs green — so suit reads from colour as well as shape.
+  King are drawn **double-headed**, the upper figure repeated rotated 180° the
+  way a real court card is printed, each with a jewelled crown or feathered
+  cap, hair, and a held sword, flower or staff. Their robes take the colour of
+  their suit, derived from one base sprite, with very dark suits lifted toward
+  a slate so black-on-black linework stays legible. The card back is an ornate
+  gold-and-crimson lattice. Every full-card sprite is rasterised once per
+  rank+suit and reused as an image, so the artwork costs no DOM.
+- **Suits** — pixel symbols too (`js/pixelart.js`), hand-authored at 15x15 so
+  the four silhouettes stay unmistakable, on a four-colour deck: spades black,
+  hearts red, diamonds blue, clubs green. Number cards lay them out in the
+  traditional 3x7 pip arrangement, with the lower pips rotated as printed.
 - **Cards & UI** — no image files anywhere. Cards tilt toward the cursor in
   3D, idle-float on the table, and spring in when played.
 - **Fonts** — [Silkscreen](https://fonts.google.com/specimen/Silkscreen) and
@@ -82,8 +84,8 @@ js/deck.js        Card model + deck helpers
 js/rules.js       Hokm game engine (pure logic, event-driven)
 js/ai.js          Bot trump-selection and card-play heuristics
 js/audio.js       Music arrangement + SFX synthesis
-js/pixelart.js    Pixel-art court sprites and card back
-js/suits.js       SVG suit artwork
+js/pixelart.js    All pixel artwork: suits, courts, card back
+js/suits.js       Suit naming + icon hydration
 js/bg.js          WebGL shader background
 js/ui.js          DOM rendering, card faces, animation juice
 js/main.js        Wires engine + AI + audio + UI together

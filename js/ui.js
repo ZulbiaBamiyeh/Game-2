@@ -74,22 +74,39 @@ export function showScreen(name) {
 
 // ---------- card artwork ----------
 
+// Traditional pip positions as [column, row] on a 3x7 grid, matching the
+// arrangement on a real deck. Pips below the midline are rotated, as printed.
+const PIP_LAYOUT = {
+  2: [[2, 1], [2, 7]],
+  3: [[2, 1], [2, 4], [2, 7]],
+  4: [[1, 1], [3, 1], [1, 7], [3, 7]],
+  5: [[1, 1], [3, 1], [2, 4], [1, 7], [3, 7]],
+  6: [[1, 1], [3, 1], [1, 4], [3, 4], [1, 7], [3, 7]],
+  7: [[1, 1], [3, 1], [2, 2], [1, 4], [3, 4], [1, 7], [3, 7]],
+  8: [[1, 1], [3, 1], [2, 2], [1, 4], [3, 4], [2, 6], [1, 7], [3, 7]],
+  9: [[1, 1], [3, 1], [1, 3], [3, 3], [2, 4], [1, 5], [3, 5], [1, 7], [3, 7]],
+  10: [[1, 1], [3, 1], [2, 2], [1, 3], [3, 3], [1, 5], [3, 5], [2, 6], [1, 7], [3, 7]],
+};
+
 /**
- * Card centre. A hand is fanned so only each card's left edge shows, which
- * makes the corner index the thing players actually read — the centre is a
- * single large mark rather than a grid of pips that would be illegible at
- * this size. Courts get a pixel-art figure whose robe picks up the suit
- * colour; everything else gets an oversized suit pip.
+ * Card centre: a double-headed court illustration for J/Q/K, one large central
+ * pip for the Ace, and the traditional pip arrangement for the number cards.
  */
 function buildCenter(card) {
   if (card.rank >= 11 && card.rank <= 13) {
-    // The sprite URL is attached as a DOM property after the markup is parsed
-    // (see createCardFace) — a data URI inlined into a style attribute would
-    // be cut short by the quotes it contains.
+    // The illustration is attached after parsing (see createCardFace).
     return '<div class="center court"></div>';
   }
-  const ace = card.rank === 14 ? ' is-ace' : '';
-  return `<div class="center">${suitSVG(card.suit, `center-suit${ace}`)}</div>`;
+  if (card.rank === 14) {
+    return `<div class="center">${suitSVG(card.suit, 'center-suit is-ace')}</div>`;
+  }
+  const pips = PIP_LAYOUT[card.rank]
+    .map(([col, row]) =>
+      `<span class="pip${row > 4 ? ' flip' : ''}" style="grid-column:${col};grid-row:${row}">` +
+      `${suitSVG(card.suit)}</span>`
+    )
+    .join('');
+  return `<div class="center pips">${pips}</div>`;
 }
 
 export function createCardFace(card, { small = false } = {}) {

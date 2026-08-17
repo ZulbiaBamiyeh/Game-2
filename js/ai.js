@@ -1,6 +1,11 @@
 // Heuristic bot logic for Hokm: trump selection and card play.
+//
+// These functions deliberately take a seat's-eye VIEW of the game rather than
+// the game itself (see HokmGame#viewFor). The hidden hands are not reachable
+// through a view, so partners cannot see each other's cards and no bot can see
+// yours — the bots decide from their own hand plus what is public at the table.
 import { SUITS } from './deck.js';
-import { teamOf, partnerOf } from './rules.js';
+import { teamOf } from './rules.js';
 
 export function chooseTrumpAI(hand) {
   const counts = {};
@@ -19,45 +24,41 @@ export function chooseTrumpAI(hand) {
   })[0];
 }
 
-function currentWinningPlay(game) {
-  const { ledSuit, plays } = game.currentTrick;
+function currentWinningPlay(view) {
+  const { ledSuit, plays } = view.currentTrick;
   let winner = plays[0];
   for (const play of plays.slice(1)) {
-    winner = game.beats(play, winner, ledSuit) ? play : winner;
+    winner = view.beats(play, winner, ledSuit) ? play : winner;
   }
   return winner;
 }
 
-export function chooseCardAI(game, seat) {
-  const valid = game.getValidMoves(seat);
+export function chooseCardAI(view) {
+  const valid = view.getValidMoves();
   if (valid.length === 1) return valid[0];
 
-  const trump = game.trumpSuit;
-  const trick = game.currentTrick;
+  const trump = view.trumpSuit;
+  const trick = view.currentTrick;
   const isLeading = trick.plays.length === 0;
 
   if (isLeading) {
-    return chooseLead(game, seat, valid);
+    return chooseLead(view, valid);
   }
 
-  const winningPlay = currentWinningPlay(game);
-  const partnerWinning = teamOf(winningPlay.seat) === teamOf(seat);
-  const isLastToPlay = trick.plays.length === 3;
+  const winningPlay = currentWinningPlay(view);
+  const partnerWinning = teamOf(winningPlay.seat) === teamOf(view.seat);
   const ledSuit = trick.ledSuit;
   const canFollow = valid.some((c) => c.suit === ledSuit);
 
   if (partnerWinning) {
-    // Partner is ahead: don't waste strength. Dump the lowest legal card,
-    // unless it's cheap to add a bit more strength on the last play only
-    // when it can't be beaten by the opponent (already resolved by then).
+    // Partner is ahead: don't waste strength, dump the lowest legal card.
     return lowestCard(valid);
   }
 
-  // Opponent is currently winning this trick — try to take it.
-  const winners = valid.filter((c) => beatsHypothetically(game, c, winningPlay.card, ledSuit));
+  // An opponent is currently winning this trick — try to take it.
+  const winners = valid.filter((c) => view.beats({ card: c }, { card: winningPlay.card }, ledSuit));
   if (winners.length) {
-    // Win as cheaply as possible.
-    return cheapestWinner(winners, trump, ledSuit);
+    return cheapestWinner(winners, ledSuit);
   }
 
   if (canFollow) {
@@ -65,19 +66,15 @@ export function chooseCardAI(game, seat) {
     return lowestCard(valid.filter((c) => c.suit === ledSuit));
   }
 
-  // Can't follow and can't win — discard lowest non-trump if possible to
-  // preserve trump for later, otherwise lowest trump.
+  // Can't follow and can't win — discard a low non-trump if possible so the
+  // trumps stay available for later tricks.
   const nonTrump = valid.filter((c) => c.suit !== trump);
   return lowestCard(nonTrump.length ? nonTrump : valid);
 }
 
-function beatsHypothetically(game, card, opponentCard, ledSuit) {
-  return game.beats({ card }, { card: opponentCard }, ledSuit);
-}
-
-function cheapestWinner(winners, trump, ledSuit) {
-  const nonTrumpWinners = winners.filter((c) => c.suit === ledSuit);
-  const pool = nonTrumpWinners.length ? nonTrumpWinners : winners;
+function cheapestWinner(winners, ledSuit) {
+  const following = winners.filter((c) => c.suit === ledSuit);
+  const pool = following.length ? following : winners;
   return pool.slice().sort((a, b) => a.rank - b.rank)[0];
 }
 
@@ -89,16 +86,13 @@ function highestCard(cards) {
   return cards.slice().sort((a, b) => b.rank - a.rank)[0];
 }
 
-function chooseLead(game, seat, valid) {
-  const trump = game.trumpSuit;
-  const hand = game.hands[seat];
-  const partner = partnerOf(seat);
+function chooseLead(view, valid) {
+  const trump = view.trumpSuit;
 
-  // Count how many cards remain in each suit for this player.
   const bySuit = {};
   for (const c of valid) (bySuit[c.suit] ||= []).push(c);
 
-  // Prefer leading a strong non-trump suit where we hold the top card.
+  // Prefer leading a non-trump suit where we hold the top card.
   const nonTrumpSuits = Object.keys(bySuit).filter((s) => s !== trump);
   for (const suit of nonTrumpSuits) {
     const cards = bySuit[suit].slice().sort((a, b) => b.rank - a.rank);
@@ -108,7 +102,7 @@ function chooseLead(game, seat, valid) {
   }
 
   // Otherwise lead our longest non-trump suit with its highest card, to
-  // eventually establish it once trumps are drawn out.
+  // eventually establish it once trumps have been drawn out.
   if (nonTrumpSuits.length) {
     const longest = nonTrumpSuits
       .slice()

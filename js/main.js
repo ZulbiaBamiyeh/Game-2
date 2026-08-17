@@ -57,7 +57,8 @@ function proceedTurn() {
     renderAllHands({ interactive: false });
     setTimeout(() => {
       if (game.phase !== 'playing' || game.currentTurnSeat() !== seat) return;
-      const card = chooseCardAI(game, seat);
+      // Bots get a restricted view, never the game itself — see rules.viewFor.
+      const card = chooseCardAI(game.viewFor(seat));
       audio.cardPlace();
       game.playCard(seat, card);
     }, aiDelay());

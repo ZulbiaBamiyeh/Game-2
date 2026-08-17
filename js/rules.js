@@ -104,6 +104,39 @@ export class HokmGame {
     });
   }
 
+  /**
+   * A seat's-eye view of the game, containing only what that player is
+   * entitled to know: their own hand, the cards on the table, the trump, how
+   * many cards everyone else is holding, and the completed tricks.
+   *
+   * Bots are given this instead of the game itself so that partners cannot see
+   * each other's cards — the hidden hands simply are not reachable from here,
+   * rather than merely being left alone by convention.
+   */
+  viewFor(seat) {
+    const game = this;
+    const trick = this.currentTrick;
+    return {
+      seat,
+      hand: this.hands[seat].slice(),
+      trumpSuit: this.trumpSuit,
+      currentTrick: trick && {
+        leader: trick.leader,
+        ledSuit: trick.ledSuit,
+        plays: trick.plays.map((p) => ({ seat: p.seat, card: p.card })),
+      },
+      // Public: everyone can see how many cards each player still holds and
+      // which cards have already been played.
+      handSizes: this.hands.map((h) => h.length),
+      trickHistory: this.trickHistory.map((t) => ({
+        winner: t.winner,
+        plays: t.plays.slice(),
+      })),
+      getValidMoves: () => game.getValidMoves(seat),
+      beats: (play, currentWinner, ledSuit) => game.beats(play, currentWinner, ledSuit),
+    };
+  }
+
   getValidMoves(seat) {
     const hand = this.hands[seat];
     const led = this.currentTrick?.ledSuit;

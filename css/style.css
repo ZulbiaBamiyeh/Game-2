@@ -65,8 +65,8 @@
   --font-body: 'Baloo 2', system-ui, -apple-system, sans-serif;
 
   --card-w: 98px;
-  /* Locked to the sprite sheet's 86x120 cell so the art is never stretched. */
-  --card-h: calc(var(--card-w) * 120 / 86);
+  /* Locked to the sprite sheet's 86x114 cell so the art is never stretched. */
+  --card-h: calc(var(--card-w) * 114 / 86);
   --radius: 10px;
 }
 
@@ -736,7 +736,6 @@ body.no-webgl #app {
   background-position:
     calc(var(--card-w) * var(--col, 0) * -1)
     calc(var(--card-h) * var(--row, 0) * -1);
-  image-rendering: pixelated;
   box-shadow: 0 4px 0 var(--outline), 0 10px 20px var(--shadow);
   overflow: hidden;
   animation: card-idle 4.5s ease-in-out infinite;
@@ -1052,7 +1051,10 @@ body.no-webgl #app {
 
 @media (max-width: 900px) {
   :root { --card-w: 68px; --card-h: 96px; }
-        .score-chip { min-width: 172px; }
+        .score-chip { min-width: 150px; padding: 0.5em 0.7em; }
+  .stat { min-width: 2.9em; }
+  .stat-num { font-size: 1.6rem; }
+  .team-seats { font-size: 0.78rem; }
   .team-seats { font-size: 0.6rem; }
   .trick-area { width: min(52vw, 300px); height: min(52vw, 300px); }
   .score-chip { min-width: 148px; }

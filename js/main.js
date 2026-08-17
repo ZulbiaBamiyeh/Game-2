@@ -138,6 +138,47 @@ function beginNewHand() {
   game.startHand();
 }
 
+const PARTNER_SEAT = 2;
+
+/**
+ * Work out what actually happened in the trick — was it cut, whose card went
+ * down, was it a big one — and let a bot react to that specifically.
+ */
+function speakAboutTrick(winner, plays) {
+  const trump = game.trumpSuit;
+  const ledSuit = plays[0].card.suit;
+  const winning = plays.find((p) => p.seat === winner);
+  const others = plays.filter((p) => p.seat !== winner);
+  if (!winning || !others.length) return;
+
+  // The card that would have taken the trick had the winner not played.
+  let runnerUp = others[0];
+  for (const p of others.slice(1)) {
+    if (game.beats(p, runnerUp, ledSuit)) runnerUp = p;
+  }
+
+  const trumped = winning.card.suit === trump && ledSuit !== trump;
+  const ctx = {
+    winnerIsHuman: winner === HUMAN_SEAT,
+    winnerIsPartner: winner === PARTNER_SEAT,
+    beatenIsHuman: runnerUp.seat === HUMAN_SEAT,
+    beatenIsPartner: runnerUp.seat === PARTNER_SEAT,
+    trumped,
+    overTrumped: trumped && runnerUp.card.suit === trump,
+    beatenRank: runnerUp.card.rank,
+    beatenWasHigh: runnerUp.card.rank >= 12,
+    winnerRank: winning.card.rank,
+  };
+
+  // Only bots speak, so drop any line whose speaker would be the player.
+  const seatFor = { partner: PARTNER_SEAT, winner, beaten: runnerUp.seat };
+  const usable = chatter.trickTalk(ctx).filter((c) => seatFor[c.role] !== HUMAN_SEAT);
+  if (!usable.length || Math.random() > 0.55) return;
+
+  const choice = chatter.pick(usable);
+  ui.showSpeech(seatFor[choice.role], choice.text);
+}
+
 /** Stagger a dealing sound across the opening deal for a riffle effect. */
 function playDealSounds(count, spacing = 55) {
   for (let i = 0; i < count; i++) {
@@ -194,19 +235,8 @@ function wireGameEvents() {
     ui.updateTrickCounts(game.tricksWon);
     ui.updateTeamTricks(teamTricks);
 
-    // Someone comments: the winner needles or celebrates, or a bot who just
-    // lost the trick grumbles instead.
-    const trumped = plays.some((p) => p.card.suit === game.trumpSuit)
-      && plays[0].card.suit !== game.trumpSuit;
-    if (winner !== HUMAN_SEAT) {
-      const line = chatter.trickLine(teamOf(winner) === 0, trumped);
-      if (line) ui.showSpeech(winner, line);
-    } else {
-      const losers = plays.map((p) => p.seat).filter((sx) => sx !== HUMAN_SEAT);
-      const who = losers[Math.floor(Math.random() * losers.length)];
-      const line = chatter.lostTrickLine(teamOf(who) === 0);
-      if (line) ui.showSpeech(who, line);
-    }
+    speakAboutTrick(winner, plays);
+
     ui.log(
       `${ui.seatName(winner)} takes the trick for ${ui.teamName(teamOf(winner))} · ` +
       `You & North ${teamTricks[0]} — West & East ${teamTricks[1]}`

@@ -52,10 +52,10 @@
   /* Four-colour deck. Red/black alone gives two buckets for four suits, so
      hearts/diamonds and spades/clubs are told apart by colour as well as
      shape. */
-  --suit-s: #17131f;
-  --suit-h: #e4153f;
-  --suit-d: #0b78d4;
-  --suit-c: #10904f;
+  --suit-s: #464d59;
+  --suit-h: #e0202c;
+  --suit-d: #dd8a10;
+  --suit-c: #1f8fdd;
 
   --outline: #05070f;
   --shadow: rgba(3, 5, 14, 0.6);
@@ -710,23 +710,22 @@ body.no-webgl #app {
   display: flex;
   flex-direction: column;
   align-items: center;
-  line-height: 0.88;
-  width: 1.5em;
+  line-height: 0.9;
+  width: 1.05em;
 }
 .corner.tl { top: 5px; left: 6px; }
 .corner.br { bottom: 5px; right: 6px; transform: rotate(180deg); }
 .corner .c-rank {
-  font-size: 1.6rem;
+  font-size: 1.3rem;
   letter-spacing: -0.02em;
 }
 .corner .c-suit {
-  font-size: 1.2rem;
-  margin-top: 0.16em;
+  font-size: 0.95rem;
+  margin-top: 0.2em;
 }
 /* "10" is twice as wide as any other rank: it needs a smaller size and a
    wider corner box, or the trailing zero is clipped off. */
-.card.rank-ten .corner { width: 2.1em; }
-.card.rank-ten .corner .c-rank { font-size: 1.12rem; }
+.card.rank-ten .corner .c-rank { font-size: 0.72rem; }
 
 .center {
   position: absolute;
@@ -740,7 +739,7 @@ body.no-webgl #app {
   opacity: 0.95;
   filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.18));
 }
-.center-suit.is-ace { font-size: 3.4rem; }
+.center-suit.is-ace { font-size: 2.9rem; }
 
 /* Court cards carry a double-headed pixel figure, as a real deck does. */
 .center.court {
@@ -750,13 +749,15 @@ body.no-webgl #app {
   image-rendering: pixelated;
 }
 
-/* Traditional pip arrangement for the number cards. */
+/* Traditional pip arrangement for the number cards. The horizontal inset has
+   to clear the corner indices: the outer pip columns sit directly over them
+   otherwise, and the rank disappears behind a pip. */
 .center.pips {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(7, 1fr);
   place-items: center;
-  padding: 7% 15%;
+  padding: 5% 26%;
 }
 /* Sized from the card width so pips scale with every breakpoint on their own,
    instead of needing a size override in each media query. */
@@ -765,7 +766,7 @@ body.no-webgl #app {
   width: 100%;
   /* A pip is square, so this caps height too. Sized as large as the 7-row
      grid allows, since pip legibility is the whole point of the layout. */
-  max-width: calc(var(--card-w) * 0.185);
+  max-width: calc(var(--card-w) * 0.145);
   line-height: 0;
 }
 .pips .pip.flip { transform: rotate(180deg); }
@@ -1076,7 +1077,7 @@ body.no-webgl #app {
   .card.rank-ten .corner .c-rank { font-size: 0.95rem; }
   .corner .c-suit { font-size: 1rem; }
   .center-suit { font-size: 2.2rem; }
-  .center-suit.is-ace { font-size: 2.8rem; }
+  .center-suit.is-ace { font-size: 2.4rem; }
   .court-glyph { font-size: 2.05rem; }
   .court-suit { font-size: 0.9rem; }
 }
@@ -1087,7 +1088,7 @@ body.no-webgl #app {
   .card.rank-ten .corner .c-rank { font-size: 0.78rem; }
   .corner .c-suit { font-size: 0.85rem; }
   .center-suit { font-size: 1.8rem; }
-  .center-suit.is-ace { font-size: 2.3rem; }
+  .center-suit.is-ace { font-size: 2rem; }
   .court-glyph { font-size: 1.7rem; }
   .court-suit { font-size: 0.75rem; }
   .score-chip { min-width: 172px; }
@@ -1108,7 +1109,7 @@ body.no-webgl #app {
   .card.rank-ten .corner .c-rank { font-size: 0.62rem; }
   .corner .c-suit { font-size: 0.7rem; }
   .center-suit { font-size: 1.4rem; }
-  .center-suit.is-ace { font-size: 1.8rem; }
+  .center-suit.is-ace { font-size: 1.6rem; }
   .court-glyph { font-size: 1.3rem; }
   .court-suit { font-size: 0.6rem; }
   .pt-pips i { width: 6px; height: 6px; border-radius: 2px; }

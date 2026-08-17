@@ -2,8 +2,8 @@
 
 A browser-based implementation of **Hokm**, the classic Persian 4-player
 trick-taking card game, styled like a neon casino-lounge roguelike — chunky
-pixel type, glowing card outlines, drifting color-blob backgrounds, and a
-synthesized jazzy chiptune soundtrack.
+pixel type, hand-drawn pixel cards, a live shader background, and a jazz
+soundtrack.
 
 Play it at
 **[zulbiabamiyeh.github.io/Game-2](https://zulbiabamiyeh.github.io/Game-2/)**,
@@ -11,22 +11,18 @@ or run it locally (see below). Every push deploys through GitHub Actions.
 
 ## About the assets
 
-Everything you see and hear is **original**, generated with plain code rather
-than taken from any existing game. The page loads no external resources at
-all — it runs fully offline.
+All the artwork is **original**, drawn in code rather than taken from any
+existing game, and the sound effects are synthesized at runtime. The
+soundtrack is a supplied AI-generated track, bundled in `audio/`. Nothing is
+fetched from a third party at runtime — the page loads only its own files.
 
-- **Music** — composed and synthesized live with the Web Audio API
-  (`js/audio.js`). A lookahead scheduler plays a sixteen-bar lounge-funk loop
-  in A minor at 104 BPM on a swung-sixteenth grid, structured A A B A so the
-  groove develops rather than just repeating. It is built around a recurring
-  syncopated **hook** — stated in full over the outer A blocks and thinned to
-  its long notes in the middle one — over a gap-driven bass line, vibraphone
-  comping with tremolo, brushed kit and a sixteenth-note shaker. Everything
-  runs through a procedurally-generated convolution reverb and a bus
-  compressor, and ducks under the win stingers.
-- **Sound effects** — likewise synthesized: dealing, placing, trick wins,
-  the trump-call swell, and hand/match fanfares, with the music ducking
-  underneath the bigger stingers.
+- **Music** — `audio/hokm-theme.mp3`, an AI-generated jazz track supplied for
+  the project. It plays through the same Web Audio mixer the effects use, so
+  the mute toggle, volume and the ducking under win stingers all apply to it.
+- **Sound effects** — synthesized live with the Web Audio API (`js/audio.js`):
+  dealing, placing, trick wins, the trump-call swell and the hand/match
+  fanfares, through a procedurally-generated convolution reverb and a bus
+  compressor.
 - **Background** — a WebGL fragment shader (`js/bg.js`) rendering
   domain-warped fbm noise, which produces the slow liquid-marble swirl.
   Falls back to a CSS gradient where WebGL is unavailable.
@@ -39,8 +35,8 @@ all — it runs fully offline.
   gold-and-crimson lattice. Every full-card sprite is rasterised once per
   rank+suit and reused as an image, so the artwork costs no DOM.
 - **Suits** — pixel symbols too (`js/pixelart.js`), hand-authored at 15x15 so
-  the four silhouettes stay unmistakable, on a four-colour deck: spades black,
-  hearts red, diamonds blue, clubs green. Number cards lay them out in the
+  the four silhouettes stay unmistakable, on a four-colour deck: slate spades,
+  red hearts, blue clubs, gold diamonds. Number cards lay them out in the
   traditional 3x7 pip arrangement, with the lower pips rotated as printed.
 - **Cards & UI** — no image files anywhere. Cards tilt toward the cursor in
   3D, idle-float on the table, and spring in when played.
@@ -83,7 +79,8 @@ fonts/            Bundled OFL fonts + license
 js/deck.js        Card model + deck helpers
 js/rules.js       Hokm game engine (pure logic, event-driven)
 js/ai.js          Bot trump-selection and card-play heuristics
-js/audio.js       Music arrangement + SFX synthesis
+js/audio.js       Music playback + SFX synthesis
+audio/            Bundled soundtrack
 js/pixelart.js    All pixel artwork: suits, courts, card back
 js/suits.js       Suit naming + icon hydration
 js/bg.js          WebGL shader background

@@ -37,6 +37,7 @@ jobs:
           sed -i "s|src=\"js/main.js\"|src=\"js/main.js?v=$SHA\"|" index.html
           sed -i -E "s|(from '\./[A-Za-z0-9_-]+\.js)'|\1?v=$SHA'|g" js/*.js
           sed -i -E "s|(\.\./fonts/[A-Za-z0-9_.-]+\.woff2)|\1?v=$SHA|g" css/style.css
+          sed -i -E "s|(audio/[A-Za-z0-9_.-]+\.mp3)|\1?v=$SHA|g" js/audio.js
           echo "Stamped assets with v=$SHA"
           grep -n 'style.css\|main.js' index.html
       - name: Upload artifact

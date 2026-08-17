@@ -5,15 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>HOKM NIGHT</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🃏</text></svg>" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+<canvas id="bg-canvas"></canvas>
+<div class="overlay overlay-vignette"></div>
+<div class="overlay overlay-grain"></div>
 <div id="app">
-  <div class="bg-glow bg-glow-1"></div>
-  <div class="bg-glow bg-glow-2"></div>
-  <div class="bg-glow bg-glow-3"></div>
 
   <!-- START SCREEN -->
   <section id="screen-start" class="screen">
@@ -22,6 +20,7 @@
       <div class="title-suits"><span class="s-spade">♠</span><span class="s-heart">♥</span><span class="s-diamond">♦</span><span class="s-club">♣</span></div>
     </div>
     <p class="subtitle">A Persian trick-taking classic, dealt out casino-lounge style</p>
+
     <div class="menu-buttons">
       <button id="btn-start" class="btn btn-gold btn-big">DEAL ME IN</button>
       <button id="btn-howto" class="btn btn-ghost">How to Play</button>

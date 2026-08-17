@@ -1,4 +1,4 @@
-// DOM rendering and animation helpers for the Hokm table.
+// DOM rendering, card artwork, and the animation "juice" for the Hokm table.
 import { SUIT_INFO, rankLabel, sortHand } from './deck.js';
 
 const $ = (sel) => document.querySelector(sel);
@@ -30,6 +30,7 @@ export const el = {
   resultDetail: $('#result-detail'),
   btnContinue: $('#btn-continue'),
   particles: $('#particles'),
+  app: $('#app'),
 };
 
 const SEAT_LABEL = ['You', 'West', 'North', 'East'];
@@ -47,30 +48,94 @@ export function showScreen(name) {
   if (name === 'game') el.screenGame.classList.remove('hidden');
 }
 
-export function createCardFace(card) {
+// ---------- card artwork ----------
+
+// Pip positions as [column, row] in a 3x7 grid, matching a real deck's layout.
+const PIP_LAYOUT = {
+  14: [[2, 4]],
+  2: [[2, 1], [2, 7]],
+  3: [[2, 1], [2, 4], [2, 7]],
+  4: [[1, 1], [3, 1], [1, 7], [3, 7]],
+  5: [[1, 1], [3, 1], [2, 4], [1, 7], [3, 7]],
+  6: [[1, 1], [3, 1], [1, 4], [3, 4], [1, 7], [3, 7]],
+  7: [[1, 1], [3, 1], [2, 3], [1, 4], [3, 4], [1, 7], [3, 7]],
+  8: [[1, 1], [3, 1], [2, 3], [1, 4], [3, 4], [2, 5], [1, 7], [3, 7]],
+  9: [[1, 1], [3, 1], [1, 3], [3, 3], [2, 4], [1, 5], [3, 5], [1, 7], [3, 7]],
+  10: [[1, 1], [3, 1], [2, 2], [1, 3], [3, 3], [1, 5], [3, 5], [2, 6], [1, 7], [3, 7]],
+};
+
+const COURT_GLYPH = { 11: '⚜', 12: '♛', 13: '♚' };
+
+function buildPips(card, info) {
+  const layout = PIP_LAYOUT[card.rank];
+  if (layout) {
+    return `<div class="pips">${layout
+      .map(
+        ([col, row]) =>
+          `<span class="pip${row > 4 ? ' flip' : ''}" style="grid-column:${col};grid-row:${row}">${info.symbol}</span>`
+      )
+      .join('')}</div>`;
+  }
+  // Court cards get a typographic panel instead of a pip grid.
+  return `
+    <div class="court">
+      <div class="court-frame">
+        <span class="court-glyph">${COURT_GLYPH[card.rank]}</span>
+        <span class="court-letter">${rankLabel(card.rank)}</span>
+      </div>
+    </div>`;
+}
+
+export function createCardFace(card, { small = false } = {}) {
   const info = SUIT_INFO[card.suit];
-  const div = document.createElement('div');
-  div.className = `card ${info.color}`;
-  div.dataset.id = card.id;
+  const wrap = document.createElement('div');
+  wrap.className = `card ${info.color}${small ? ' card-sm' : ''}`;
+  wrap.dataset.id = card.id;
   const label = rankLabel(card.rank);
-  div.innerHTML = `
-    <div class="corner top">${label}<br>${info.symbol}</div>
-    <div class="pip">${info.symbol}</div>
-    <div class="corner bottom">${label}<br>${info.symbol}</div>
-  `;
-  return div;
+  wrap.innerHTML = `
+    <div class="card-inner">
+      <div class="card-face">
+        <div class="corner tl"><span class="c-rank">${label}</span><span class="c-suit">${info.symbol}</span></div>
+        ${buildPips(card, info)}
+        <div class="corner br"><span class="c-rank">${label}</span><span class="c-suit">${info.symbol}</span></div>
+      </div>
+    </div>`;
+  return wrap;
 }
 
 function createCardBack() {
   const div = document.createElement('div');
   div.className = 'card-back';
+  div.innerHTML = '<div class="back-pattern"></div><div class="back-emblem">✦</div>';
   return div;
 }
+
+// ---------- hands ----------
 
 export function renderOpponentHand(seat, count) {
   const container = document.getElementById(`hand-${seat}`);
   container.innerHTML = '';
-  for (let i = 0; i < count; i++) container.appendChild(createCardBack());
+  for (let i = 0; i < count; i++) {
+    const back = createCardBack();
+    back.style.setProperty('--i', i);
+    container.appendChild(back);
+  }
+}
+
+/** Tilt a card toward the cursor for a subtle parallax on hover. */
+function attachTilt(cardEl) {
+  const inner = cardEl.querySelector('.card-inner');
+  cardEl.addEventListener('mousemove', (e) => {
+    const rect = cardEl.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    inner.style.setProperty('--tilt-y', `${px * 22}deg`);
+    inner.style.setProperty('--tilt-x', `${-py * 18}deg`);
+  });
+  cardEl.addEventListener('mouseleave', () => {
+    inner.style.setProperty('--tilt-y', '0deg');
+    inner.style.setProperty('--tilt-x', '0deg');
+  });
 }
 
 export function renderSouthHand(cards, trumpSuit, { interactive, validIds, onPlay } = {}) {
@@ -80,12 +145,21 @@ export function renderSouthHand(cards, trumpSuit, { interactive, validIds, onPla
   const n = sorted.length;
   sorted.forEach((card, i) => {
     const cardEl = createCardFace(card);
-    const rot = n > 1 ? (i - (n - 1) / 2) * 3.5 : 0;
-    cardEl.style.setProperty('--rot', `${rot}deg`);
+    const mid = (n - 1) / 2;
+    const offset = n > 1 ? i - mid : 0;
+    // Fan the hand along a shallow arc.
+    cardEl.style.setProperty('--rot', `${offset * 3.2}deg`);
+    cardEl.style.setProperty('--lift', `${Math.abs(offset) * Math.abs(offset) * 1.1}px`);
+    cardEl.style.setProperty('--i', i);
+    cardEl.style.zIndex = i;
+
+    if (trumpSuit && card.suit === trumpSuit) cardEl.classList.add('is-trump');
+
     if (interactive) {
       const isValid = validIds.has(card.id);
       cardEl.classList.add(isValid ? 'playable' : 'disabled');
       if (isValid) {
+        attachTilt(cardEl);
         cardEl.addEventListener('click', () => onPlay(card));
       }
     }
@@ -93,23 +167,29 @@ export function renderSouthHand(cards, trumpSuit, { interactive, validIds, onPla
   });
 }
 
+// ---------- HUD ----------
+
 export function updateTrickCounts(tricksWon) {
   for (let s = 0; s < 4; s++) {
-    document.getElementById(`tricks-${s}`).textContent = tricksWon[s];
+    const node = document.getElementById(`tricks-${s}`);
+    if (node.textContent !== String(tricksWon[s])) {
+      node.textContent = tricksWon[s];
+      pop(node);
+    }
   }
 }
 
 export function updateScores(matchScore, bumpTeam = null) {
   el.scoreA.textContent = matchScore[0];
   el.scoreB.textContent = matchScore[1];
-  if (bumpTeam === 0) bump(el.scoreA);
-  if (bumpTeam === 1) bump(el.scoreB);
+  if (bumpTeam === 0) pop(el.scoreA, 'bump');
+  if (bumpTeam === 1) pop(el.scoreB, 'bump');
 }
 
-function bump(node) {
-  node.classList.remove('bump');
+function pop(node, cls = 'pop') {
+  node.classList.remove(cls);
   void node.offsetWidth;
-  node.classList.add('bump');
+  node.classList.add(cls);
 }
 
 export function setHakemBanner(text) {
@@ -119,10 +199,13 @@ export function setHakemBanner(text) {
 export function setTrumpBanner(suit) {
   if (!suit) {
     el.trumpBanner.textContent = '';
+    el.trumpBanner.className = 'pill trump-pill';
     return;
   }
   const info = SUIT_INFO[suit];
-  el.trumpBanner.textContent = `HOKM: ${info.symbol} ${info.name}`;
+  el.trumpBanner.textContent = `HOKM ${info.symbol}`;
+  el.trumpBanner.className = `pill trump-pill is-set suit-${info.color}`;
+  pop(el.trumpBanner);
 }
 
 export function setActiveSeat(seat) {
@@ -135,32 +218,101 @@ export function setTurnText(text) {
   el.turnIndicator.textContent = text;
 }
 
+// ---------- trick area ----------
+
 export function placeCardInTrick(seat, card) {
   const slot = document.getElementById(`slot-${seat}`);
   slot.innerHTML = '';
   const cardEl = createCardFace(card);
-  cardEl.style.setProperty('--rot', '0deg');
+  // A small random skew makes the pile look hand-dealt rather than snapped to a grid.
+  cardEl.style.setProperty('--rot', `${(Math.random() - 0.5) * 14}deg`);
   cardEl.classList.add('playing');
   slot.appendChild(cardEl);
+  el.trickArea.classList.add('has-cards');
   return cardEl;
 }
 
 export function clearTrickArea() {
+  let sweeping = false;
   for (let s = 0; s < 4; s++) {
-    document.getElementById(`slot-${s}`).innerHTML = '';
+    const slot = document.getElementById(`slot-${s}`);
+    const card = slot.querySelector('.card');
+    if (card) {
+      sweeping = true;
+      card.classList.add('sweeping');
+      setTimeout(() => {
+        if (card.parentNode === slot) slot.innerHTML = '';
+      }, 320);
+    } else {
+      slot.innerHTML = '';
+    }
+  }
+  // Hold the "cards present" state until the sweep finishes, so the turn
+  // prompt doesn't flash back in behind the outgoing cards.
+  if (sweeping) {
+    setTimeout(() => el.trickArea.classList.remove('has-cards'), 320);
+  } else {
+    el.trickArea.classList.remove('has-cards');
   }
 }
 
 export function glowWinner(seat) {
   const slot = document.getElementById(`slot-${seat}`);
   const cardEl = slot.querySelector('.card');
-  if (cardEl) cardEl.classList.add('winner-glow');
+  if (!cardEl) return null;
+  cardEl.classList.add('winner-glow');
+  return cardEl;
+}
+
+// ---------- juice ----------
+
+export function screenShake(strength = 1) {
+  el.app.style.setProperty('--shake', strength);
+  el.app.classList.remove('shaking');
+  void el.app.offsetWidth;
+  el.app.classList.add('shaking');
+  setTimeout(() => el.app.classList.remove('shaking'), 420);
 }
 
 export function shakeTable() {
   el.table.classList.remove('shake');
   void el.table.offsetWidth;
   el.table.classList.add('shake');
+}
+
+const BURST_COLORS = ['#ffcf3f', '#ff5470', '#43d9ff', '#4ef08e', '#c08cff'];
+
+/** Radial spark burst centred on an element. */
+export function burstAt(target, count = 18) {
+  const rect = target.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  for (let i = 0; i < count; i++) {
+    const spark = document.createElement('div');
+    spark.className = 'spark';
+    const angle = (Math.PI * 2 * i) / count + Math.random() * 0.4;
+    const dist = 60 + Math.random() * 90;
+    spark.style.left = `${cx}px`;
+    spark.style.top = `${cy}px`;
+    spark.style.background = BURST_COLORS[Math.floor(Math.random() * BURST_COLORS.length)];
+    spark.style.setProperty('--dx', `${Math.cos(angle) * dist}px`);
+    spark.style.setProperty('--dy', `${Math.sin(angle) * dist}px`);
+    spark.style.animationDuration = `${0.5 + Math.random() * 0.4}s`;
+    el.particles.appendChild(spark);
+    setTimeout(() => spark.remove(), 1000);
+  }
+}
+
+/** Floating text that rises and fades — used for trick and score callouts. */
+export function floatText(target, text, variant = '') {
+  const rect = target.getBoundingClientRect();
+  const node = document.createElement('div');
+  node.className = `float-text ${variant}`;
+  node.textContent = text;
+  node.style.left = `${rect.left + rect.width / 2}px`;
+  node.style.top = `${rect.top + rect.height / 2}px`;
+  el.particles.appendChild(node);
+  setTimeout(() => node.remove(), 1200);
 }
 
 let logTimer = null;
@@ -171,11 +323,15 @@ export function log(message) {
   el.log.appendChild(span);
 }
 
+// ---------- modals ----------
+
 export function showTrumpModal(hand, onChoose) {
   el.hakemPreview.innerHTML = '';
-  sortHand(hand).forEach((card) => {
-    const cardEl = createCardFace(card);
+  sortHand(hand).forEach((card, i) => {
+    const cardEl = createCardFace(card, { small: true });
     cardEl.style.setProperty('--rot', '0deg');
+    cardEl.style.animationDelay = `${i * 60}ms`;
+    cardEl.classList.add('deal-pop');
     el.hakemPreview.appendChild(cardEl);
   });
   el.modalTrump.classList.remove('hidden');
@@ -189,9 +345,10 @@ export function showTrumpModal(hand, onChoose) {
   buttons.forEach((b) => b.addEventListener('click', handler));
 }
 
-export function showResultModal(title, detail, onContinue) {
+export function showResultModal(title, detail, onContinue, { grand = false } = {}) {
   el.resultTitle.textContent = title;
   el.resultDetail.textContent = detail;
+  el.modalResult.querySelector('.modal-card').classList.toggle('is-grand', grand);
   el.modalResult.classList.remove('hidden');
   const btn = el.btnContinue;
   const handler = () => {
@@ -202,18 +359,21 @@ export function showResultModal(title, detail, onContinue) {
   btn.addEventListener('click', handler);
 }
 
-const CONFETTI_COLORS = ['#ffd23f', '#ff4d6d', '#3ec9ff', '#3ee089', '#b083ff'];
-export function spawnConfetti(count = 30) {
+const CONFETTI_COLORS = ['#ffcf3f', '#ff5470', '#43d9ff', '#4ef08e', '#c08cff', '#ffffff'];
+export function spawnConfetti(count = 36) {
   for (let i = 0; i < count; i++) {
     const piece = document.createElement('div');
     piece.className = 'confetti';
     piece.style.left = `${Math.random() * 100}vw`;
     piece.style.background = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
-    const duration = 1.6 + Math.random() * 1.4;
+    piece.style.width = `${6 + Math.random() * 8}px`;
+    piece.style.height = `${10 + Math.random() * 10}px`;
+    const duration = 1.8 + Math.random() * 1.6;
     piece.style.animationDuration = `${duration}s`;
-    piece.style.animationDelay = `${Math.random() * 0.4}s`;
-    piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+    piece.style.animationDelay = `${Math.random() * 0.5}s`;
+    piece.style.setProperty('--spin', `${360 + Math.random() * 720}deg`);
+    piece.style.setProperty('--drift', `${(Math.random() - 0.5) * 240}px`);
     el.particles.appendChild(piece);
-    setTimeout(() => piece.remove(), (duration + 0.5) * 1000);
+    setTimeout(() => piece.remove(), (duration + 0.7) * 1000);
   }
 }

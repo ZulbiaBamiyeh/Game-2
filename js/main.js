@@ -1,15 +1,17 @@
 import { HokmGame, HUMAN_SEAT, teamOf } from './rules.js';
 import { chooseTrumpAI, chooseCardAI } from './ai.js';
 import { audio } from './audio.js';
+import { ShaderBackground } from './bg.js';
 import * as ui from './ui.js';
 import { SUIT_INFO } from './deck.js';
 
-const TRICK_HOLD_MS = 1000;
-const HAND_MODAL_DELAY_MS = 1400;
+const TRICK_HOLD_MS = 1150;
+const HAND_MODAL_DELAY_MS = 1500;
 const AI_MIN_DELAY = 550;
 const AI_MAX_DELAY = 1050;
 
 let game = null;
+let background = null;
 
 function aiDelay() {
   return AI_MIN_DELAY + Math.random() * (AI_MAX_DELAY - AI_MIN_DELAY);
@@ -22,11 +24,7 @@ function renderAllHands({ interactive = false } = {}) {
   let opts;
   if (interactive) {
     const validIds = new Set(game.getValidMoves(HUMAN_SEAT).map((c) => c.id));
-    opts = {
-      interactive: true,
-      validIds,
-      onPlay: (card) => humanPlay(card),
-    };
+    opts = { interactive: true, validIds, onPlay: (card) => humanPlay(card) };
   } else {
     opts = { interactive: false };
   }
@@ -38,6 +36,7 @@ function humanPlay(card) {
   if (game.currentTurnSeat() !== HUMAN_SEAT) return;
   if (!game.isValidMove(HUMAN_SEAT, card)) {
     audio.invalidMove();
+    ui.shakeTable();
     return;
   }
   audio.cardPlace();
@@ -77,7 +76,7 @@ function beginTrumpSelection() {
         audio.trumpChosen();
         game.chooseTrump(suit);
       });
-    }, 400);
+    }, 420);
   } else {
     setTimeout(() => {
       const suit = chooseTrumpAI(game.hands[hakem]);
@@ -94,22 +93,32 @@ function beginNewHand() {
   game.startHand();
 }
 
+/** Stagger a dealing sound across the opening deal for a riffle effect. */
+function playDealSounds(count, spacing = 55) {
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => audio.cardDeal(), i * spacing);
+  }
+}
+
 function wireGameEvents() {
   game.on('hand-start', ({ hakemSeat, handNumber }) => {
     ui.log(`Hand ${handNumber} — ${ui.seatName(hakemSeat)} deals and becomes Hakem.`);
   });
 
   game.on('initial-deal', () => {
+    playDealSounds(8);
     renderAllHands({ interactive: false });
     beginTrumpSelection();
   });
 
   game.on('trump-chosen', ({ suit, hakemSeat }) => {
     ui.setTrumpBanner(suit);
+    if (background) background.pulse();
     ui.log(`${ui.seatName(hakemSeat)} calls ${SUIT_INFO[suit].name} (${SUIT_INFO[suit].symbol}) as Hokm!`);
   });
 
   game.on('final-deal', () => {
+    playDealSounds(10, 45);
     renderAllHands({ interactive: false });
     proceedTurn();
   });
@@ -125,42 +134,48 @@ function wireGameEvents() {
   game.on('trick-end', ({ winner, teamTricks }) => {
     ui.setActiveSeat(null);
     ui.setTurnText(`${ui.seatName(winner)} takes the trick!`);
-    ui.glowWinner(winner);
+
+    const cardEl = ui.glowWinner(winner);
     audio.trickWin();
+    ui.screenShake(teamOf(winner) === 0 ? 1 : 0.6);
+    if (cardEl) {
+      ui.burstAt(cardEl, 16);
+      ui.floatText(cardEl, '+1');
+    }
+
     ui.updateTrickCounts(game.tricksWon);
     ui.log(`${ui.seatName(winner)} wins the trick. (${teamTricks[0]}–${teamTricks[1]} tricks)`);
 
     setTimeout(() => {
       ui.clearTrickArea();
-      if (game.phase === 'playing') {
-        proceedTurn();
-      }
+      if (game.phase === 'playing') proceedTurn();
     }, TRICK_HOLD_MS);
   });
 
   game.on('hand-end', (payload) => {
     setTimeout(() => {
       ui.updateScores(payload.matchScore, payload.winningTeam);
+      if (background) background.pulse();
+
       if (payload.matchOver) {
         audio.matchWin();
-        ui.spawnConfetti(70);
+        ui.spawnConfetti(90);
+        ui.screenShake(1.6);
         ui.showResultModal(
-          'MATCH WON! 🏆',
-          `${ui.teamName(payload.winningTeam)} win the match ${payload.matchScore[0]}–${payload.matchScore[1]}!`,
-          () => {
-            ui.showScreen('start');
-          }
+          'MATCH WON!',
+          `${ui.teamName(payload.winningTeam)} take the match ${payload.matchScore[0]}–${payload.matchScore[1]}.`,
+          () => ui.showScreen('start'),
+          { grand: true }
         );
       } else {
         audio.handWin();
-        ui.spawnConfetti(28);
-        const kotText = payload.isKot ? ' — a KOT (7–0 shutout)! Worth double.' : '';
+        ui.spawnConfetti(payload.isKot ? 60 : 32);
+        ui.screenShake(payload.isKot ? 1.4 : 0.9);
+        const kotText = payload.isKot ? ' — a KOT! Worth double.' : '';
         ui.showResultModal(
           `${ui.teamName(payload.winningTeam)} win the hand!`,
           `Tricks: ${payload.teamTricks[0]}–${payload.teamTricks[1]}${kotText}`,
-          () => {
-            beginNewHand();
-          }
+          () => beginNewHand()
         );
       }
     }, HAND_MODAL_DELAY_MS);
@@ -177,6 +192,9 @@ function startNewMatch() {
 }
 
 function init() {
+  background = new ShaderBackground(document.getElementById('bg-canvas'));
+  background.start();
+
   ui.el.btnStart.addEventListener('click', async () => {
     await audio.resume();
     audio.startMusic();

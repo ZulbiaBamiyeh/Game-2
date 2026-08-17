@@ -14,6 +14,10 @@ export const el = {
   chkSfx: $('#chk-sfx'),
   scoreA: $('#score-a'),
   scoreB: $('#score-b'),
+  tricksTeamA: $('#tricks-team-a'),
+  tricksTeamB: $('#tricks-team-b'),
+  tricksBarA: $('#tricks-bar-a'),
+  tricksBarB: $('#tricks-bar-b'),
   hakemBanner: $('#hakem-banner'),
   trumpBanner: $('#trump-banner'),
   btnMuteMusic: $('#btn-mute-music'),
@@ -50,53 +54,38 @@ export function showScreen(name) {
 
 // ---------- card artwork ----------
 
-// Pip positions as [column, row] in a 3x7 grid, matching a real deck's layout.
-const PIP_LAYOUT = {
-  14: [[2, 4]],
-  2: [[2, 1], [2, 7]],
-  3: [[2, 1], [2, 4], [2, 7]],
-  4: [[1, 1], [3, 1], [1, 7], [3, 7]],
-  5: [[1, 1], [3, 1], [2, 4], [1, 7], [3, 7]],
-  6: [[1, 1], [3, 1], [1, 4], [3, 4], [1, 7], [3, 7]],
-  7: [[1, 1], [3, 1], [2, 3], [1, 4], [3, 4], [1, 7], [3, 7]],
-  8: [[1, 1], [3, 1], [2, 3], [1, 4], [3, 4], [2, 5], [1, 7], [3, 7]],
-  9: [[1, 1], [3, 1], [1, 3], [3, 3], [2, 4], [1, 5], [3, 5], [1, 7], [3, 7]],
-  10: [[1, 1], [3, 1], [2, 2], [1, 3], [3, 3], [1, 5], [3, 5], [2, 6], [1, 7], [3, 7]],
-};
+const COURT_GLYPH = { 11: '♞', 12: '♛', 13: '♚' };
 
-const COURT_GLYPH = { 11: '⚜', 12: '♛', 13: '♚' };
-
-function buildPips(card, info) {
-  const layout = PIP_LAYOUT[card.rank];
-  if (layout) {
-    return `<div class="pips">${layout
-      .map(
-        ([col, row]) =>
-          `<span class="pip${row > 4 ? ' flip' : ''}" style="grid-column:${col};grid-row:${row}">${info.symbol}</span>`
-      )
-      .join('')}</div>`;
-  }
-  // Court cards get a typographic panel instead of a pip grid.
-  return `
-    <div class="court">
-      <div class="court-frame">
+/**
+ * Card centre. A hand is fanned so only each card's left edge shows, which
+ * makes the corner index the thing players actually read — the centre is a
+ * single large glyph rather than a grid of pips that would be illegible at
+ * this size.
+ */
+function buildCenter(card, info) {
+  // Courts are J/Q/K only — the Ace (rank 14) takes an oversized suit pip.
+  if (COURT_GLYPH[card.rank]) {
+    return `
+      <div class="center court">
         <span class="court-glyph">${COURT_GLYPH[card.rank]}</span>
-        <span class="court-letter">${rankLabel(card.rank)}</span>
-      </div>
-    </div>`;
+      </div>`;
+  }
+  const ace = card.rank === 14 ? ' is-ace' : '';
+  return `<div class="center"><span class="center-suit${ace}">${info.symbol}</span></div>`;
 }
 
 export function createCardFace(card, { small = false } = {}) {
   const info = SUIT_INFO[card.suit];
   const wrap = document.createElement('div');
   wrap.className = `card ${info.color}${small ? ' card-sm' : ''}`;
+  if (card.rank === 10) wrap.classList.add('rank-ten');
   wrap.dataset.id = card.id;
   const label = rankLabel(card.rank);
   wrap.innerHTML = `
     <div class="card-inner">
       <div class="card-face">
         <div class="corner tl"><span class="c-rank">${label}</span><span class="c-suit">${info.symbol}</span></div>
-        ${buildPips(card, info)}
+        ${buildCenter(card, info)}
         <div class="corner br"><span class="c-rank">${label}</span><span class="c-suit">${info.symbol}</span></div>
       </div>
     </div>`;
@@ -176,6 +165,26 @@ export function updateTrickCounts(tricksWon) {
       node.textContent = tricksWon[s];
       pop(node);
     }
+  }
+}
+
+/**
+ * Show each team's pooled trick count for the current hand. Without this the
+ * only visible numbers are per-seat counts and the hand-point score, which
+ * makes a team's progress toward winning the hand invisible.
+ */
+export function updateTeamTricks(teamTricks) {
+  const cells = [
+    [el.tricksTeamA, el.tricksBarA, teamTricks[0]],
+    [el.tricksTeamB, el.tricksBarB, teamTricks[1]],
+  ];
+  for (const [label, bar, value] of cells) {
+    if (label.textContent !== String(value)) {
+      label.textContent = value;
+      pop(label.parentElement);
+    }
+    bar.style.width = `${Math.min(value / 7, 1) * 100}%`;
+    bar.classList.toggle('is-full', value >= 7);
   }
 }
 

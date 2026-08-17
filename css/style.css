@@ -56,8 +56,8 @@
   --font-pixel: 'Silkscreen', 'Courier New', monospace;
   --font-body: 'Baloo 2', system-ui, -apple-system, sans-serif;
 
-  --card-w: 78px;
-  --card-h: 110px;
+  --card-w: 98px;
+  --card-h: 138px;
   --radius: 12px;
 }
 
@@ -316,11 +316,11 @@ body.no-webgl #app {
   background: linear-gradient(180deg, var(--navy-600), var(--navy-800));
   border: 3px solid var(--outline);
   border-radius: 14px;
-  padding: 0.45em 0.95em 0.3em;
+  padding: 0.45em 0.95em 0.4em;
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 116px;
+  min-width: 132px;
   box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.07), 0 5px 0 var(--outline), 0 10px 20px var(--shadow);
   position: relative;
   overflow: hidden;
@@ -348,6 +348,53 @@ body.no-webgl #app {
   line-height: 1.1;
   text-shadow: 0 3px 0 var(--outline);
 }
+.score-row { display: flex; align-items: baseline; gap: 0.3em; }
+.score-unit {
+  font-family: var(--font-pixel);
+  font-size: 0.5rem;
+  color: var(--ink-faint);
+  letter-spacing: 0.06em;
+}
+
+/* Pooled trick progress for the hand in play. */
+.tricks-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  margin: 0.15em 0 0.2em;
+}
+.tricks-text {
+  font-family: var(--font-pixel);
+  font-size: 0.5rem;
+  color: var(--ink-dim);
+  letter-spacing: 0.05em;
+}
+.tricks-text b { color: var(--gold); font-weight: 400; }
+.tricks-row.pop { animation: pill-pop 0.4s cubic-bezier(.3,1.6,.4,1); }
+
+.tricks-bar {
+  width: 100%;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+.tricks-bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--gold-deep), var(--gold));
+  transition: width 0.35s cubic-bezier(.3,1.3,.5,1);
+}
+.tricks-bar i.is-full {
+  background: linear-gradient(90deg, var(--green-deep), var(--green));
+  box-shadow: 0 0 12px var(--green);
+}
+
 .score-num.bump { animation: score-bump 0.5s cubic-bezier(.3,1.6,.4,1); }
 @keyframes score-bump {
   0% { transform: scale(1); }
@@ -409,8 +456,10 @@ body.no-webgl #app {
 .seat-west { grid-area: west; justify-content: center; }
 .seat-east { grid-area: east; justify-content: center; }
 .seat-south { grid-area: south; justify-content: flex-end; }
-/* Keep the south nameplate clear of the fanned hand above it. */
-.seat-south .nameplate { position: relative; z-index: 70; margin-top: 0.15rem; }
+/* Nameplates always sit above their own stack of cards. */
+.nameplate { position: relative; z-index: 70; }
+.seat-south .nameplate { margin-top: 0.15rem; }
+.seat-west, .seat-east { overflow: hidden; }
 
 .nameplate {
   font-family: var(--font-pixel);
@@ -427,6 +476,13 @@ body.no-webgl #app {
   box-shadow: 0 4px 0 var(--outline), 0 8px 14px var(--shadow);
   transition: color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
+/* Team colour-coding: your side is blue, the opponents red — matching the
+   score chips, so who is partnered with whom is readable at a glance. */
+.nameplate.team-a { border-color: var(--blue-deep); }
+.nameplate.team-b { border-color: var(--red-deep); }
+.nameplate.team-a .trick-count { background: var(--blue); }
+.nameplate.team-b .trick-count { background: var(--red); }
+
 .trick-count {
   background: var(--gold);
   color: var(--outline);
@@ -460,14 +516,17 @@ body.no-webgl #app {
   align-items: center;
   justify-content: center;
 }
+/* North shows small card backs, so it must not reserve a full card's height —
+   that space belongs to the trick area in the middle row. */
+.hand-north { min-height: calc(var(--card-h) * 0.62 + 12px); }
 
 /* ---------- trick area ---------- */
 
 .trick-area {
   grid-area: center;
   position: relative;
-  width: min(38vh, 348px);
-  height: min(38vh, 348px);
+  width: min(34vh, 330px);
+  height: min(34vh, 330px);
   margin: 0 auto;
   border-radius: 50%;
   background:
@@ -486,10 +545,10 @@ body.no-webgl #app {
   top: 50%;
   left: 50%;
 }
-.slot-0 { transform: translate(-50%, 2%); }
-.slot-1 { transform: translate(-134%, -50%); }
-.slot-2 { transform: translate(-50%, -102%); }
-.slot-3 { transform: translate(34%, -50%); }
+.slot-0 { transform: translate(-50%, -12%); }
+.slot-1 { transform: translate(-126%, -50%); }
+.slot-2 { transform: translate(-50%, -88%); }
+.slot-3 { transform: translate(26%, -50%); }
 
 .turn-indicator {
   position: absolute;
@@ -552,7 +611,7 @@ body.no-webgl #app {
     0 10px 20px var(--shadow);
   display: grid;
   grid-template-rows: auto 1fr auto;
-  padding: 5px 6px;
+  padding: 6px 7px;
   font-family: var(--font-pixel);
   color: var(--card-ink);
   overflow: hidden;
@@ -566,63 +625,46 @@ body.no-webgl #app {
   50% { transform: translateY(-3px); }
 }
 
+/* The corner index is the primary read — a fanned hand shows little else. */
 .corner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  line-height: 0.92;
-  font-size: 0.82rem;
-  width: 1.4em;
+  line-height: 0.88;
+  width: 1.5em;
 }
-.corner .c-suit { font-size: 0.86em; }
+.corner .c-rank {
+  font-size: 1.6rem;
+  letter-spacing: -0.02em;
+}
+.corner .c-suit {
+  font-size: 1.15rem;
+  margin-top: 0.1em;
+}
 .corner.br {
   justify-self: end;
   transform: rotate(180deg);
 }
+/* "10" is twice as wide as any other rank, so it needs to come down a step. */
+.card.rank-ten .corner .c-rank { font-size: 1.12rem; }
 
-.pips {
+.center {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(7, 1fr);
   place-items: center;
-  padding: 1px 3px;
   min-height: 0;
+  overflow: hidden;
 }
-.pip {
-  font-size: 0.78rem;
+.center-suit {
+  font-size: 2.7rem;
   line-height: 1;
-}
-.pip.flip { transform: rotate(180deg); }
-
-.court {
-  display: grid;
-  place-items: center;
-  min-height: 0;
-  padding: 2px;
-}
-.court-frame {
-  width: 100%;
-  height: 100%;
-  border: 2px solid currentColor;
-  border-radius: 6px;
-  display: grid;
-  place-items: center;
-  position: relative;
-  background:
-    repeating-linear-gradient(45deg, transparent 0 5px, rgba(0, 0, 0, 0.045) 5px 10px);
   opacity: 0.92;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.16));
 }
+.center-suit.is-ace { font-size: 3.5rem; }
 .court-glyph {
-  font-size: 1.45rem;
+  font-size: 2.5rem;
   line-height: 1;
-  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.25));
-}
-.court-letter {
-  position: absolute;
-  bottom: 1px;
-  font-size: 0.6rem;
-  letter-spacing: 0.05em;
-  opacity: 0.75;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.2));
 }
 
 /* hand-specific card behaviour */
@@ -657,10 +699,12 @@ body.no-webgl #app {
   pointer-events: none;
 }
 
-.card-sm { --card-w: 62px; --card-h: 88px; }
-.card-sm .corner { font-size: 0.66rem; }
-.card-sm .pip { font-size: 0.6rem; }
-.card-sm .court-glyph { font-size: 1.1rem; }
+.card-sm { --card-w: 78px; --card-h: 110px; }
+.card-sm .corner .c-rank { font-size: 1.25rem; }
+.card-sm.rank-ten .corner .c-rank { font-size: 0.88rem; }
+.card-sm .corner .c-suit { font-size: 0.9rem; }
+.card-sm .center-suit { font-size: 2rem; }
+.card-sm .court-glyph { font-size: 1.85rem; }
 
 /* card backs */
 
@@ -696,7 +740,9 @@ body.no-webgl #app {
 
 .hand-north .card-back { margin-left: calc(var(--card-w) * -0.42); }
 .hand-north .card-back:first-child { margin-left: 0; }
-.hand-west .card-back, .hand-east .card-back { margin-top: calc(var(--card-h) * -0.44); }
+/* Tighter stacking so a full 13-card column fits its row without spilling
+   over the nameplate above it. */
+.hand-west .card-back, .hand-east .card-back { margin-top: calc(var(--card-h) * -0.5); }
 .hand-west .card-back:first-child, .hand-east .card-back:first-child { margin-top: 0; }
 .hand-west .card-back { transform: rotate(-4deg); }
 .hand-east .card-back { transform: rotate(4deg); }
@@ -925,15 +971,34 @@ body.no-webgl #app {
 
 /* ---------- responsive ---------- */
 
+@media (max-width: 1100px) {
+  :root { --card-w: 82px; --card-h: 116px; }
+  .corner .c-rank { font-size: 1.35rem; }
+  .card.rank-ten .corner .c-rank { font-size: 0.95rem; }
+  .corner .c-suit { font-size: 1rem; }
+  .center-suit { font-size: 2.2rem; }
+  .court-glyph { font-size: 2.05rem; }
+}
+
 @media (max-width: 900px) {
-  :root { --card-w: 62px; --card-h: 88px; }
+  :root { --card-w: 68px; --card-h: 96px; }
+  .corner .c-rank { font-size: 1.1rem; }
+  .card.rank-ten .corner .c-rank { font-size: 0.78rem; }
+  .corner .c-suit { font-size: 0.85rem; }
+  .center-suit { font-size: 1.8rem; }
+  .court-glyph { font-size: 1.7rem; }
   .trick-area { width: min(52vw, 300px); height: min(52vw, 300px); }
   .score-chip { min-width: 92px; }
   .score-num { font-size: 1.5rem; }
 }
 
 @media (max-width: 620px) {
-  :root { --card-w: 50px; --card-h: 71px; }
+  :root { --card-w: 54px; --card-h: 76px; }
+  .corner .c-rank { font-size: 0.9rem; }
+  .card.rank-ten .corner .c-rank { font-size: 0.62rem; }
+  .corner .c-suit { font-size: 0.7rem; }
+  .center-suit { font-size: 1.4rem; }
+  .court-glyph { font-size: 1.3rem; }
   .hud { padding: 0.5rem 0.6rem 0.1rem; }
   .score-label { font-size: 0.45rem; }
   .score-chip { min-width: 74px; padding: 0.35em 0.5em 0.25em; }

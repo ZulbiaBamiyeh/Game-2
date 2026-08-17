@@ -89,6 +89,7 @@ function beginTrumpSelection() {
 function beginNewHand() {
   ui.clearTrickArea();
   ui.updateTrickCounts([0, 0, 0, 0]);
+  ui.updateTeamTricks([0, 0]);
   ui.setTrumpBanner(null);
   game.startHand();
 }
@@ -144,7 +145,11 @@ function wireGameEvents() {
     }
 
     ui.updateTrickCounts(game.tricksWon);
-    ui.log(`${ui.seatName(winner)} wins the trick. (${teamTricks[0]}–${teamTricks[1]} tricks)`);
+    ui.updateTeamTricks(teamTricks);
+    ui.log(
+      `${ui.seatName(winner)} takes the trick for ${ui.teamName(teamOf(winner))} · ` +
+      `You & North ${teamTricks[0]} — West & East ${teamTricks[1]}`
+    );
 
     setTimeout(() => {
       ui.clearTrickArea();
@@ -187,6 +192,7 @@ function startNewMatch() {
   wireGameEvents();
   ui.updateScores([0, 0]);
   ui.updateTrickCounts([0, 0, 0, 0]);
+  ui.updateTeamTricks([0, 0]);
   ui.clearTrickArea();
   game.startMatch();
 }

@@ -1,7 +1,21 @@
 // DOM rendering, card artwork, and the animation "juice" for the Hokm table.
 import { SUIT_INFO, rankLabel, sortHand } from './deck.js';
 import { suitSVG } from './suits.js';
-import { courtSVG } from './pixelart.js';
+import { courtImage } from './pixelart.js';
+
+// Suit colours are read back from the stylesheet so the palette has a single
+// source of truth; the map is only a fallback if the custom property is absent.
+const SUIT_HEX_FALLBACK = { S: '#17131f', H: '#e4153f', D: '#0b78d4', C: '#10904f' };
+const suitHexCache = {};
+function suitHex(suit) {
+  if (!suitHexCache[suit]) {
+    const v = getComputedStyle(document.documentElement)
+      .getPropertyValue(`--suit-${suit.toLowerCase()}`)
+      .trim();
+    suitHexCache[suit] = v || SUIT_HEX_FALLBACK[suit];
+  }
+  return suitHexCache[suit];
+}
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -69,7 +83,10 @@ export function showScreen(name) {
  */
 function buildCenter(card) {
   if (card.rank >= 11 && card.rank <= 13) {
-    return `<div class="center court">${courtSVG(card.rank, 'court-figure')}</div>`;
+    // The sprite URL is attached as a DOM property after the markup is parsed
+    // (see createCardFace) — a data URI inlined into a style attribute would
+    // be cut short by the quotes it contains.
+    return '<div class="center court"></div>';
   }
   const ace = card.rank === 14 ? ' is-ace' : '';
   return `<div class="center">${suitSVG(card.suit, `center-suit${ace}`)}</div>`;
@@ -90,6 +107,10 @@ export function createCardFace(card, { small = false } = {}) {
         <div class="corner br">${corner}</div>
       </div>
     </div>`;
+
+  const court = wrap.querySelector('.center.court');
+  if (court) court.style.backgroundImage = courtImage(card.rank, suitHex(card.suit));
+
   return wrap;
 }
 

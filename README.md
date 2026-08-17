@@ -31,9 +31,13 @@ all — it runs fully offline.
   domain-warped fbm noise, which produces the slow liquid-marble swirl.
   Falls back to a CSS gradient where WebGL is unavailable.
 - **Card art** — hand-drawn pixel art (`js/pixelart.js`). The Jack, Queen and
-  King are character-grid sprites rendered as SVG rects, whose robes take the
-  colour of their suit; the card back is an ornate gold-and-crimson lattice.
-  Suits are drawn as SVG paths (`js/suits.js`) with deliberately distinct
+  King are 40x56 character-grid sprites with multi-tone shading — jewelled
+  crowns, flowing hair, fur trim, a feathered cap — whose robes take the
+  colour of their suit, derived at render time from a single base sprite. The
+  card back is an ornate gold-and-crimson lattice. Each finished sprite is
+  rasterised once and reused as a background image, so the artwork can be as
+  detailed as it likes without putting a single rect in the DOM.
+- **Suits** — drawn as SVG paths (`js/suits.js`) with deliberately distinct
   silhouettes, on a four-colour deck — spades black, hearts red, diamonds
   blue, clubs green — so suit reads from colour as well as shape.
 - **Cards & UI** — no image files anywhere. Cards tilt toward the cursor in

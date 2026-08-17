@@ -739,13 +739,14 @@ body.no-webgl #app {
 }
 .center-suit.is-ace { font-size: 3.4rem; }
 
-/* Court cards carry a pixel-art figure whose robe inherits the suit colour. */
-.court { display: flex; align-items: center; justify-content: center; }
-.pixel-art { image-rendering: pixelated; display: block; }
-.court-figure {
-  width: auto;
-  height: 74%;
-  filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.25));
+/* Court cards carry a pixel-art figure whose robe inherits the suit colour.
+   It is a background image rather than inline markup, so the sprite can be as
+   detailed as we like without adding thousands of rects to the page. */
+.center.court {
+  background-repeat: no-repeat;
+  background-position: center 58%;
+  background-size: auto 80%;
+  image-rendering: pixelated;
 }
 
 /* hand-specific card behaviour */

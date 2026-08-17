@@ -739,15 +739,14 @@ body.no-webgl #app {
 }
 .center-suit.is-ace { font-size: 3.4rem; }
 
-/* Court cards: the figure glyph reads as the rank, with a small suit tucked
-   beside it so the suit is never carried by the corner alone. */
-.court { display: flex; align-items: center; justify-content: center; gap: 0.1em; }
-.court-glyph {
-  font-size: 2.5rem;
-  line-height: 1;
-  filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.2));
+/* Court cards carry a pixel-art figure whose robe inherits the suit colour. */
+.court { display: flex; align-items: center; justify-content: center; }
+.pixel-art { image-rendering: pixelated; display: block; }
+.court-figure {
+  width: auto;
+  height: 74%;
+  filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.25));
 }
-.court-suit { font-size: 1.05rem; opacity: 0.9; }
 
 /* hand-specific card behaviour */
 
@@ -795,31 +794,18 @@ body.no-webgl #app {
 .card-back {
   width: calc(var(--card-w) * 0.62);
   height: calc(var(--card-h) * 0.62);
-  border-radius: 9px;
+  border-radius: 8px;
   border: 3px solid var(--outline);
-  background: linear-gradient(160deg, var(--red-deep), #7d0d2a);
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.16), 0 3px 0 var(--outline), 0 6px 12px var(--shadow);
+  /* One shared pixel-art image, set once from JS — see main.js. */
+  background-image: var(--card-back-img);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-color: var(--red-deep);
+  image-rendering: pixelated;
+  box-shadow: 0 3px 0 var(--outline), 0 6px 12px var(--shadow);
   position: relative;
   overflow: hidden;
   flex: 0 0 auto;
-}
-.back-pattern {
-  position: absolute;
-  inset: 3px;
-  border-radius: 5px;
-  background:
-    repeating-linear-gradient(45deg, rgba(255, 207, 63, 0.22) 0 4px, transparent 4px 8px),
-    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.1) 0 4px, transparent 4px 8px);
-}
-.back-emblem {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--gold);
-  font-size: 0.95rem;
-  text-shadow: 0 1px 0 var(--outline);
 }
 
 .hand-north .card-back { margin-left: calc(var(--card-w) * -0.42); }

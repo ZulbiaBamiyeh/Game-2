@@ -1,6 +1,7 @@
 // DOM rendering, card artwork, and the animation "juice" for the Hokm table.
 import { SUIT_INFO, rankLabel, sortHand } from './deck.js';
 import { suitSVG } from './suits.js';
+import { courtSVG } from './pixelart.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -59,22 +60,16 @@ export function showScreen(name) {
 
 // ---------- card artwork ----------
 
-const COURT_GLYPH = { 11: '♞', 12: '♛', 13: '♚' };
-
 /**
  * Card centre. A hand is fanned so only each card's left edge shows, which
  * makes the corner index the thing players actually read — the centre is a
- * single large glyph rather than a grid of pips that would be illegible at
- * this size.
+ * single large mark rather than a grid of pips that would be illegible at
+ * this size. Courts get a pixel-art figure whose robe picks up the suit
+ * colour; everything else gets an oversized suit pip.
  */
 function buildCenter(card) {
-  // Courts are J/Q/K only — the Ace (rank 14) takes an oversized suit pip.
-  if (COURT_GLYPH[card.rank]) {
-    return `
-      <div class="center court">
-        <span class="court-glyph">${COURT_GLYPH[card.rank]}</span>
-        ${suitSVG(card.suit, 'court-suit')}
-      </div>`;
+  if (card.rank >= 11 && card.rank <= 13) {
+    return `<div class="center court">${courtSVG(card.rank, 'court-figure')}</div>`;
   }
   const ace = card.rank === 14 ? ' is-ace' : '';
   return `<div class="center">${suitSVG(card.suit, `center-suit${ace}`)}</div>`;
@@ -98,10 +93,12 @@ export function createCardFace(card, { small = false } = {}) {
   return wrap;
 }
 
+// The back is one shared data-URI image rather than per-card SVG: with three
+// opponents holding thirteen cards each, inlining it would add thousands of
+// rects to the DOM for no visual gain.
 function createCardBack() {
   const div = document.createElement('div');
   div.className = 'card-back';
-  div.innerHTML = '<div class="back-pattern"></div><div class="back-emblem">✦</div>';
   return div;
 }
 

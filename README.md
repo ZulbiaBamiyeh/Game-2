@@ -16,21 +16,28 @@ than taken from any existing game. The page loads no external resources at
 all — it runs fully offline.
 
 - **Music** — composed and synthesized live with the Web Audio API
-  (`js/audio.js`). A lookahead scheduler plays a lounge-jazz arrangement over
-  an eight-bar ii-V-I cycle in A minor at 92 BPM with swung eighths: an
-  upright walking bass that picks chromatic approach tones into each new
-  chord, a vibraphone comping part with tremolo, brushed ride and snare, a
-  soft kick, and a written melody that sits out every other cycle so the
-  groove can breathe. Everything runs through a procedurally-generated
-  convolution reverb and a bus compressor.
+  (`js/audio.js`). A lookahead scheduler plays a sixteen-bar lounge-funk loop
+  in A minor at 104 BPM on a swung-sixteenth grid, structured A A B A so the
+  groove develops rather than just repeating. It is built around a recurring
+  syncopated **hook** — stated in full over the outer A blocks and thinned to
+  its long notes in the middle one — over a gap-driven bass line, vibraphone
+  comping with tremolo, brushed kit and a sixteenth-note shaker. Everything
+  runs through a procedurally-generated convolution reverb and a bus
+  compressor, and ducks under the win stingers.
 - **Sound effects** — likewise synthesized: dealing, placing, trick wins,
   the trump-call swell, and hand/match fanfares, with the music ducking
   underneath the bigger stingers.
 - **Background** — a WebGL fragment shader (`js/bg.js`) rendering
   domain-warped fbm noise, which produces the slow liquid-marble swirl.
   Falls back to a CSS gradient where WebGL is unavailable.
-- **Cards & UI** — pure HTML/CSS, no images. Cards use real pip layouts on a
-  3x7 grid, tilt toward the cursor in 3D, and idle-float on the table.
+- **Card art** — hand-drawn pixel art (`js/pixelart.js`). The Jack, Queen and
+  King are character-grid sprites rendered as SVG rects, whose robes take the
+  colour of their suit; the card back is an ornate gold-and-crimson lattice.
+  Suits are drawn as SVG paths (`js/suits.js`) with deliberately distinct
+  silhouettes, on a four-colour deck — spades black, hearts red, diamonds
+  blue, clubs green — so suit reads from colour as well as shape.
+- **Cards & UI** — no image files anywhere. Cards tilt toward the cursor in
+  3D, idle-float on the table, and spring in when played.
 - **Fonts** — [Silkscreen](https://fonts.google.com/specimen/Silkscreen) and
   [Baloo 2](https://fonts.google.com/specimen/Baloo+2), bundled in `fonts/`
   and served locally. Both are under the SIL Open Font License; see
@@ -71,6 +78,8 @@ js/deck.js        Card model + deck helpers
 js/rules.js       Hokm game engine (pure logic, event-driven)
 js/ai.js          Bot trump-selection and card-play heuristics
 js/audio.js       Music arrangement + SFX synthesis
+js/pixelart.js    Pixel-art court sprites and card back
+js/suits.js       SVG suit artwork
 js/bg.js          WebGL shader background
 js/ui.js          DOM rendering, card faces, animation juice
 js/main.js        Wires engine + AI + audio + UI together

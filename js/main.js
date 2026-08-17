@@ -5,6 +5,7 @@ import { ShaderBackground } from './bg.js';
 import * as ui from './ui.js';
 import { SUIT_INFO } from './deck.js';
 import { hydrateSuitIcons } from './suits.js';
+import { cardBackSVG } from './pixelart.js';
 
 const TRICK_HOLD_MS = 1150;
 const HAND_MODAL_DELAY_MS = 1500;
@@ -201,6 +202,11 @@ function startNewMatch() {
 
 function init() {
   hydrateSuitIcons();
+  // Build the card-back artwork once and share it as an image across every back.
+  document.documentElement.style.setProperty(
+    '--card-back-img',
+    `url("data:image/svg+xml,${encodeURIComponent(cardBackSVG())}")`
+  );
   background = new ShaderBackground(document.getElementById('bg-canvas'));
   background.start();
 

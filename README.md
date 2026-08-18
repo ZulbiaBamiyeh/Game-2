@@ -84,11 +84,11 @@ js/ai.js          Bot trump-selection and card-play heuristics
 js/audio.js       Music playback + SFX synthesis
 audio/            Bundled soundtrack
 js/pixelart.js    Pixel artwork: suit symbols, card back
-tools/slice_deck.py  Slices the deck contact sheet into the sprite sheets
-assets/           Deck source image + generated card sprite sheets
 js/suits.js       Suit naming + icon hydration
 js/bg.js          WebGL shader background
 js/ui.js          DOM rendering, card faces, animation juice
 js/chatter.js     Table-talk lines, chosen by what just happened
 js/main.js        Wires engine + AI + audio + UI together
+assets/           Deck source image + the two generated sprite sheets
+tools/            slice_deck.py, which cuts the source into those sheets
 ```

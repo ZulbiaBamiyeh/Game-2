@@ -239,7 +239,7 @@ function wireGameEvents() {
 
     ui.log(
       `${ui.seatName(winner)} takes the trick for ${ui.teamName(teamOf(winner))} · ` +
-      `You & North ${teamTricks[0]} — West & East ${teamTricks[1]}`
+      `${ui.teamName(0)} ${teamTricks[0]} — ${ui.teamName(1)} ${teamTricks[1]}`
     );
 
     setTimeout(() => {
@@ -272,6 +272,13 @@ function wireGameEvents() {
         if (speaker !== null) {
           const line = chatter.handEndLine(teamOf(speaker) === 0, true, payload.isKot);
           if (line) ui.showSpeech(speaker, line);
+        }
+        // On a Kot the whitewashed side gets a word in too, a beat later.
+        const sulkers = [1, 2, 3].filter((sx) => teamOf(sx) !== payload.winningTeam);
+        if (payload.isKot && sulkers.length) {
+          const sulker = sulkers[Math.floor(Math.random() * sulkers.length)];
+          const line = chatter.handEndLine(teamOf(sulker) === 0, false, true);
+          if (line) setTimeout(() => ui.showSpeech(sulker, line), 900);
         }
         audio.handWin();
         ui.spawnConfetti(payload.isKot ? 60 : 32);

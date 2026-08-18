@@ -75,29 +75,37 @@
         <span id="hakem-banner" class="pill"></span>
         <span id="trump-banner" class="pill trump-pill"></span>
       </div>
-      <div class="score-chip team-b" id="panel-b">
-        <div class="team-head">
-          <span class="team-name">OPPONENTS</span>
-          <span class="team-seats" id="team-b-seats">West + East</span>
-        </div>
-        <div class="stat-row">
-          <div class="stat">
-            <span id="tricks-team-b" class="stat-num tricks-num">0</span>
-            <span class="stat-cap">TRICKS<br>THIS HAND</span>
+      <!-- The opponents panel and the controls share the right-hand column so
+           the centre column stays centred on the viewport, not on the row. -->
+      <!-- The opponents panel and the controls share the right-hand column, so
+           the centre column stays centred on the viewport rather than on the
+           row: with all four as siblings the banner drifts left as the window
+           widens. -->
+      <div class="hud-right">
+        <div class="score-chip team-b" id="panel-b">
+          <div class="team-head">
+            <span class="team-name">OPPONENTS</span>
+            <span class="team-seats" id="team-b-seats">West + East</span>
           </div>
-          <div class="stat-div"></div>
-          <div class="stat">
-            <span id="score-b" class="stat-num">0</span>
-            <span class="stat-cap">POINTS<br>OF 7</span>
+          <div class="stat-row">
+            <div class="stat">
+              <span id="tricks-team-b" class="stat-num tricks-num">0</span>
+              <span class="stat-cap">TRICKS<br>THIS HAND</span>
+            </div>
+            <div class="stat-div"></div>
+            <div class="stat">
+              <span id="score-b" class="stat-num">0</span>
+              <span class="stat-cap">POINTS<br>OF 7</span>
+            </div>
           </div>
+          <div class="tricks-bar"><i id="tricks-bar-b"></i></div>
+          <div class="pt-pips" id="pips-b"></div>
         </div>
-        <div class="tricks-bar"><i id="tricks-bar-b"></i></div>
-        <div class="pt-pips" id="pips-b"></div>
-      </div>
-      <div class="hud-controls">
-        <button id="btn-mute-music" class="icon-btn" title="Toggle music">🎵</button>
-        <button id="btn-mute-sfx" class="icon-btn" title="Toggle sound effects">🔊</button>
-        <button id="btn-deck" class="icon-btn" title="Switch between the standard and high-contrast deck">🎴</button>
+        <div class="hud-controls">
+          <button id="btn-mute-music" class="icon-btn" title="Toggle music">🎵</button>
+          <button id="btn-mute-sfx" class="icon-btn" title="Toggle sound effects">🔊</button>
+          <button id="btn-deck" class="icon-btn" title="Switch between the standard and high-contrast deck">🎴</button>
+        </div>
       </div>
     </header>
 

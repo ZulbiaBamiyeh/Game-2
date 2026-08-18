@@ -11,10 +11,11 @@ or run it locally (see below). Every push deploys through GitHub Actions.
 
 ## About the assets
 
-All the artwork is **original**, drawn in code rather than taken from any
-existing game, and the sound effects are synthesized at runtime. The
-soundtrack is a supplied AI-generated track, bundled in `audio/`. Nothing is
-fetched from a third party at runtime — the page loads only its own files.
+Nothing here comes from another game. The deck art and the soundtrack are
+supplied AI-generated assets bundled into the repo; everything else — the
+background, the card backs, the suit symbols and every sound effect — is
+generated in code at runtime. Nothing is fetched from a third party while the
+page runs: it loads only its own files.
 
 - **Music** — `audio/hokm-theme.mp3`, an AI-generated jazz track supplied for
   the project. It plays through the same Web Audio mixer the effects use, so
@@ -26,20 +27,20 @@ fetched from a third party at runtime — the page loads only its own files.
 - **Background** — a WebGL fragment shader (`js/bg.js`) rendering
   domain-warped fbm noise, which produces the slow liquid-marble swirl.
   Falls back to a CSS gradient where WebGL is unavailable.
-- **Card art** — hand-drawn pixel art (`js/pixelart.js`). The Jack, Queen and
-  King are drawn **double-headed**, the upper figure repeated rotated 180° the
-  way a real court card is printed, each with a jewelled crown or feathered
-  cap, hair, and a held sword, flower or staff. Their robes take the colour of
-  their suit, derived from one base sprite, with very dark suits lifted toward
-  a slate so black-on-black linework stays legible. The card back is an ornate
-  gold-and-crimson lattice. Every full-card sprite is rasterised once per
-  rank+suit and reused as an image, so the artwork costs no DOM.
-- **Suits** — pixel symbols too (`js/pixelart.js`), hand-authored at 15x15 so
-  the four silhouettes stay unmistakable, on a four-colour deck: slate spades,
-  red hearts, blue clubs, gold diamonds. Number cards lay them out in the
-  traditional 3x7 pip arrangement, with the lower pips rotated as printed.
-- **Cards & UI** — no image files anywhere. Cards tilt toward the cursor in
-  3D, idle-float on the table, and spring in when played.
+- **Card art** — a supplied, generated deck contact sheet
+  (`assets/deck-source.jpeg`), sliced into two 13x4 sprite sheets by
+  `tools/slice_deck.py`: `cards-main.png` and a high-contrast variant with
+  blue clubs and gold diamonds, switchable in-game. Each card is cropped on
+  its printed border and pasted centred into a fixed 87x115 cell with an equal
+  margin on all four sides, then supersampled 3x so it stays sharp when the
+  table scales it up. A card face is one cell of that sheet, picked by two CSS
+  custom properties, so a whole hand costs one image and no DOM.
+- **Card backs & suit icons** — hand-drawn pixel art (`js/pixelart.js`): an
+  ornate gold-and-crimson lattice back, and 15x15 suit symbols authored so the
+  four silhouettes stay unmistakable at HUD size.
+- **Table juice** — cards tilt toward the cursor in 3D, idle-float on the
+  table, and spring in when played; the winner's card jumps and the HUD
+  numbers pop as they change.
 - **Fonts** — [Silkscreen](https://fonts.google.com/specimen/Silkscreen) and
   [Baloo 2](https://fonts.google.com/specimen/Baloo+2), bundled in `fonts/`
   and served locally. Both are under the SIL Open Font License; see
@@ -82,7 +83,9 @@ js/rules.js       Hokm game engine (pure logic, event-driven)
 js/ai.js          Bot trump-selection and card-play heuristics
 js/audio.js       Music playback + SFX synthesis
 audio/            Bundled soundtrack
-js/pixelart.js    All pixel artwork: suits, courts, card back
+js/pixelart.js    Pixel artwork: suit symbols, card back
+tools/slice_deck.py  Slices the deck contact sheet into the sprite sheets
+assets/           Deck source image + generated card sprite sheets
 js/suits.js       Suit naming + icon hydration
 js/bg.js          WebGL shader background
 js/ui.js          DOM rendering, card faces, animation juice

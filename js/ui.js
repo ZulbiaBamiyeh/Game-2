@@ -80,8 +80,10 @@ export function showSpeech(seat, text) {
   bubble.className = 'speech';
   bubble.textContent = text;
   host.appendChild(bubble);
-  setTimeout(() => bubble.classList.add('leaving'), 2600);
-  setTimeout(() => bubble.remove(), 3100);
+  // Longer lines need longer on screen; the bubbles are small and pixel-set.
+  const hold = Math.min(4200, 1800 + text.length * 45);
+  setTimeout(() => bubble.classList.add('leaving'), hold);
+  setTimeout(() => bubble.remove(), hold + 500);
 }
 
 export function showScreen(name) {

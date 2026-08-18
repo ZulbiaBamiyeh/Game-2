@@ -65,8 +65,8 @@
   --font-body: 'Baloo 2', system-ui, -apple-system, sans-serif;
 
   --card-w: 98px;
-  /* Locked to the sprite sheet's 86x114 cell so the art is never stretched. */
-  --card-h: calc(var(--card-w) * 114 / 86);
+  /* Locked to the sprite sheet's 87x115 cell so the art is never stretched. */
+  --card-h: calc(var(--card-w) * 115 / 87);
   --radius: 10px;
 }
 
@@ -327,11 +327,26 @@ body.no-webgl #app {
 .hud {
   position: relative;
   z-index: 3;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  /* Three columns with equal 1fr flanks, so the middle one is centred on the
+     viewport. Laying the four blocks out with space-between instead puts the
+     banner at the second of four slots, and it drifts further left the wider
+     the window gets. */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
   padding: 0.85rem 1.2rem 0.2rem;
   gap: 0.8rem;
+}
+
+.hud > .team-a { justify-self: start; }
+
+.hud-right {
+  /* Controls stack under the panel rather than beside it, so both team panels
+     sit the same distance from their own edge and mirror each other. */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
 }
 
 .score-chip {
@@ -497,7 +512,7 @@ body.no-webgl #app {
   100% { transform: scale(1); }
 }
 
-.hud-controls { display: flex; gap: 0.45rem; padding-top: 0.2rem; }
+.hud-controls { display: flex; gap: 0.45rem; padding-top: 0.2rem; flex: 0 0 auto; }
 
 /* ---------- table ---------- */
 
@@ -505,6 +520,12 @@ body.no-webgl #app {
   position: relative;
   z-index: 2;
   flex: 1;
+  /* Capped and centred: the side seats are pushed out by the 1fr columns, so
+     without a ceiling they drift toward the window edges on a wide monitor and
+     the table reads as a ring of scattered piles. */
+  width: 100%;
+  max-width: 1180px;
+  margin-inline: auto;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   grid-template-columns: minmax(70px, 1fr) auto minmax(70px, 1fr);
@@ -519,8 +540,11 @@ body.no-webgl #app {
 
 .seat { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; }
 .seat-north { grid-area: north; }
-.seat-west { grid-area: west; justify-content: center; }
-.seat-east { grid-area: east; justify-content: center; }
+/* justify-self keeps the seat box the width of its own cards. Stretched across
+   the whole column, a speech bubble hung off its edge lands in open table
+   rather than beside the hand it belongs to. */
+.seat-west { grid-area: west; justify-content: center; justify-self: center; }
+.seat-east { grid-area: east; justify-content: center; justify-self: center; }
 .seat-south { grid-area: south; justify-content: flex-end; }
 /* Nameplates always sit above their own stack of cards. */
 .nameplate { position: relative; z-index: 70; }
@@ -601,7 +625,10 @@ body.no-webgl #app {
 .speech {
   position: absolute;
   z-index: 80;
-  max-width: 12em;
+  /* Absolutely positioned against a narrow seat pill, so without an explicit
+     width the bubble shrinks to its longest word and stacks one word a line. */
+  width: max-content;
+  max-width: 14em;
   padding: 0.5em 0.7em;
   font-family: var(--font-pixel);
   font-size: 0.6rem;
@@ -644,9 +671,13 @@ body.no-webgl #app {
 .trick-area {
   grid-area: center;
   position: relative;
-  width: min(34vh, 330px);
-  height: min(34vh, 330px);
-  margin: 0 auto;
+  /* Centred in its row and bounded by the row, not just by the viewport:
+     pinned to the top it left all the slack below it, which on a short window
+     ran the pool into the player's own hand. */
+  place-self: center;
+  aspect-ratio: 1;
+  height: min(34vh, 330px, 100%);
+  width: auto;
   border-radius: 50%;
   /* Soft felt pool with no hard edge — a ring would just draw attention to
      cards overhanging it. */
@@ -731,7 +762,12 @@ body.no-webgl #app {
   background-color: var(--card-cream);
   background-image: var(--card-sheet);
   background-repeat: no-repeat;
-  /* One cell of a 13x4 sheet, picked by --col/--row set on the card. */
+  /* One cell of a 13x4 sheet, picked by --col/--row set on the card. The
+     origin has to be the border box: with the default padding-box the sheet
+     is anchored inside the 3px border, so the cell's right and bottom edges
+     get clipped while its left and top show in full — the card ends up with a
+     pale margin down two sides only. */
+  background-origin: border-box;
   background-size: calc(var(--card-w) * 13) calc(var(--card-h) * 4);
   background-position:
     calc(var(--card-w) * var(--col, 0) * -1)
@@ -784,7 +820,7 @@ body.no-webgl #app {
   pointer-events: none;
 }
 
-.card-sm { --card-w: 78px; --card-h: 110px; }
+.card-sm { --card-w: 78px; --card-h: calc(var(--card-w) * 115 / 87); }
 .card-sm .card-sm .court-suit { font-size: 0.8rem; }
 
 /* card backs */
@@ -1045,31 +1081,44 @@ body.no-webgl #app {
 
 /* ---------- responsive ---------- */
 
+/* Large displays: without these the table keeps its 1280-era size and sits in
+   the middle of a mostly empty screen. Both axes are gated — a tall card on a
+   short window would just push the hands off the bottom. */
+@media (min-width: 1500px) and (min-height: 850px) {
+  :root { --card-w: 116px; }
+  .table { max-width: 1400px; }
+  .trick-area { height: min(38vh, 400px, 100%); }
+}
+
+@media (min-width: 1800px) and (min-height: 1000px) {
+  :root { --card-w: 132px; }
+  .table { max-width: 1580px; }
+  .trick-area { height: min(40vh, 460px, 100%); }
+}
+
 @media (max-width: 1100px) {
-  :root { --card-w: 82px; --card-h: 116px; }
-      }
+  :root { --card-w: 82px; }
+  .score-chip { min-width: 150px; padding: 0.5em 0.7em; }
+}
 
 @media (max-width: 900px) {
-  :root { --card-w: 68px; --card-h: 96px; }
-        .score-chip { min-width: 150px; padding: 0.5em 0.7em; }
-  .stat { min-width: 2.9em; }
-  .stat-num { font-size: 1.6rem; }
-  .team-seats { font-size: 0.78rem; }
-  .team-seats { font-size: 0.6rem; }
-  .trick-area { width: min(52vw, 300px); height: min(52vw, 300px); }
+  :root { --card-w: 68px; }
+  /* Height only — the base rule derives the width from the 1:1 aspect ratio. */
+  .trick-area { height: min(52vw, 300px, 100%); }
   .score-chip { min-width: 148px; }
+  .stat { min-width: 2.9em; }
   .stat-num { font-size: 1.5rem; }
   .team-name { font-size: 0.66rem; }
   .team-seats { font-size: 0.72rem; }
 }
 
 @media (max-width: 620px) {
-  :root { --card-w: 54px; --card-h: 76px; }
-        .team-name { font-size: 0.5rem; }
-  .team-seats { font-size: 0.55rem; }
-  .hud { padding: 0.5rem 0.6rem 0.1rem; }
+  :root { --card-w: 54px; }
+  .hud { padding: 0.5rem 0.6rem 0.1rem; gap: 0.4rem; }
   .score-chip { min-width: 108px; padding: 0.35em 0.5em 0.3em; }
   .stat-num { font-size: 1.5rem; }
+  .team-name { font-size: 0.5rem; }
+  .team-seats { font-size: 0.55rem; }
   .pt-pips { gap: 2px; }
   .pill { font-size: 0.55rem; padding: 0.35em 0.7em; }
   .nameplate { font-size: 0.55rem; }
